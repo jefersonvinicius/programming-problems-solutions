@@ -11,9 +11,10 @@ type Property struct {
 	AverageConsumption int
 }
 
-func printProperties(properties []Property) {
+func printProperties(properties map[int]Property, keys []int) {
 	propertiesLength := len(properties)
-	for index, property := range properties {
+	for index, key := range keys {
+		property := properties[key]
 		if index == propertiesLength-1 {
 			fmt.Printf("%d-%d\n", property.NumberOfResidents, property.AverageConsumption)
 			continue
@@ -22,32 +23,19 @@ func printProperties(properties []Property) {
 	}
 }
 
-func removePropertiesIndex(properties []Property, index int) []Property {
-	return append(properties[:index], properties[index+1:]...)
-}
-
-func groupPropertiesByAverage(properties []Property) []Property {
-	if len(properties) == 1 {
-		return properties
-	}
-
-	currentAverage := properties[0].AverageConsumption
-	currentPropertyIndex := 1
-	for currentPropertyIndex < len(properties) {
-		currentProperty := properties[currentPropertyIndex]
-
-		if currentAverage == currentProperty.AverageConsumption {
-			properties[currentPropertyIndex-1].NumberOfResidents += currentProperty.NumberOfResidents
-			properties = removePropertiesIndex(properties, currentPropertyIndex)
-		}
-
-		currentPropertyIndex++
-	}
-	return properties
-}
-
 func truncateTo2DecimalPlaces(n float64) float64 {
 	return float64(int(n*100)) / 100
+}
+
+func getOrderedMapKeys(properties map[int]Property) []int {
+	keys := make([]int, len(properties))
+	index := 0
+	for key, _ := range properties {
+		keys[index] = key
+		index++
+	}
+	sort.Ints(keys)
+	return keys
 }
 
 func main() {
@@ -62,7 +50,7 @@ func main() {
 
 		totalConsumption := 0
 		totalHabitants := 0
-		properties := make([]Property, 0, n)
+		properties := make(map[int]Property)
 
 		for i := 0; i < n; i++ {
 			var residents, consumption int
@@ -70,21 +58,21 @@ func main() {
 			totalHabitants += residents
 			totalConsumption += consumption
 
-			property := Property{NumberOfResidents: residents, TotalConsumption: consumption, AverageConsumption: consumption / residents}
-			properties = append(properties, property)
+			average := consumption / residents
+			property := Property{NumberOfResidents: residents, TotalConsumption: consumption, AverageConsumption: average}
+
+			previousProperty, exists := properties[average]
+			if exists {
+				property.NumberOfResidents += previousProperty.NumberOfResidents
+			}
+			properties[average] = property
 		}
-
-		sort.SliceStable(properties, func(i, j int) bool {
-			return properties[i].AverageConsumption < properties[j].AverageConsumption
-		})
-
-		properties = groupPropertiesByAverage(properties)
 
 		if currentTown > 1 {
 			fmt.Println()
 		}
 		fmt.Printf("Cidade# %d:\n", currentTown)
-		printProperties(properties)
+		printProperties(properties, getOrderedMapKeys(properties))
 
 		average := float64(totalConsumption) / float64(totalHabitants)
 		fmt.Printf("Consumo medio: %.2f m3.\n", truncateTo2DecimalPlaces(average))
