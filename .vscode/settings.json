@@ -63,6 +63,8 @@
         "vector": "cpp",
         "stack": "cpp",
         "deque": "cpp",
-        "__memory": "cpp"
+        "__memory": "cpp",
+        "map": "cpp",
+        "__tree": "cpp"
     }
 }
