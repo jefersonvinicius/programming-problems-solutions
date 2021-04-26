@@ -3,3 +3,5 @@
 !*.*
 *.txt
 holder.*
+*.jar
+.DS_Store
