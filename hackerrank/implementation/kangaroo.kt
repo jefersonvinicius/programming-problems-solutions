@@ -18,8 +18,8 @@ import kotlin.sequences.*
 import kotlin.text.*
 
 fun kangaroo(x1: Int, v1: Int, x2: Int, v2: Int): String {
-    val jumps = (x2 - x1) / (v1 - v2)
-    return if (jumps < 0) "NO" else "YES"
+    if (v1 < v2 && x2 - x1 > v1) return "NO"
+    return "YES"
 }
 
 fun main(args: Array<String>) {
