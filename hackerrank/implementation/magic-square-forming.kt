@@ -18,6 +18,7 @@ import kotlin.sequences.*
 import kotlin.text.*
 
 fun formingMagicSquare(s: Array<Array<Int>>): Int {
+    columnsCost(s)
     return rowsCost(s)
 }
 
@@ -31,15 +32,35 @@ fun rowsCost(square: Array<Array<Int>>): Int {
     var result = 0
     for (row in square) {
         val rowTotal = sumArray(row)
-        result += Math.abs(rowTotal - 15)
+        result += cost(rowTotal)
     }
     return result;
 }
 
-//fun columnsCost(square: Array<Array<Int>>): Int {
-//
-//}
+fun columnsCost(square: Array<Array<Int>>): Int {
+    var cols = arrayOf(0, 0, 0)
+    for (row in square) {
+        for ((index, col) in row.withIndex()) {
+            cols[index] += col
+        }
+    }
 
+    var result = cols.fold(0) {
+        total, current -> total + cost(current)
+    }
+
+    for (c in cols) {
+        println(c)
+    }
+
+    println("result: $result");
+
+    return result;
+}
+
+fun cost(value: Int): Int {
+    return Math.abs(value - 15)
+}
 
 fun main(args: Array<String>) {
     val s = Array<Array<Int>>(3, { Array<Int>(3, { 0 }) })
