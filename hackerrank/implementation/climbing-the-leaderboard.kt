@@ -19,32 +19,24 @@ import kotlin.text.*
 
 fun climbingLeaderboard(ranked: Array<Int>, player: Array<Int>): Array<Int> {
     var result = mutableListOf<Int>()
-    val positions = createPositionsMap(ranked)
-    for (score in player) {
-        var index = ranked.indexOfLast { score < it  }
-        if (index == -1) {
-            result.add(1)
-        } else {
-            result.add(positions[index] + 1)
-        }
+    var scores = createMappedScores(ranked)
+    var scoresCresc = scores.keys.reversed()
+    var initialPosition = ranked.size
+
+    for (score in scoresCresc) {
+        println(score)
     }
+
     return result.toTypedArray()
 }
 
-fun createPositionsMap(ranking: Array<Int>): Array<Int> {
-    val result = Array(ranking.size) { -1 }
-    var position = 1;
-    for ((index, currentValue) in ranking.withIndex()) {
-        if (index == 0) {
-            result[index] = position
-            continue
-        }
-        val previousValue = ranking[index - 1]
-        if (currentValue < previousValue) position++
 
-        result[index] = position
+fun createMappedScores(ranking: Array<Int>): Map<Int, Int> {
+    val pontuations = mutableMapOf<Int, Int>()
+    for (score in ranking) {
+        pontuations[score] = pontuations.getOrDefault(score, 0) + 1
     }
-    return result;
+    return pontuations;
 }
 
 fun main(args: Array<String>) {
