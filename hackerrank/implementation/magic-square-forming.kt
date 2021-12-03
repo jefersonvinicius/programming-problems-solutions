@@ -17,6 +17,14 @@ import kotlin.ranges.*
 import kotlin.sequences.*
 import kotlin.text.*
 
+// 1 1 1 -> 12
+// 1 1 1 -> 12
+// 1 1 1 -> 12
+
+// 1 1 1 -> 1 9 5 -> 12
+// 1 1 1 -> 2 6 7 -> 12
+// 1 1 1 -> 3 4 8 -> 12
+
 fun formingMagicSquare(s: Array<Array<Int>>): Int {
     columnsCost(s)
     return rowsCost(s)
