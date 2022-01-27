@@ -22,10 +22,10 @@ class Node {
 
 class LinkedList {
     private:
-        map<int, Node*> enemiesReferences;
         Node* lastAddedAtEnd;
 
     public:
+        map<int, Node*> enemiesReferences;
         Node* head;
 
         LinkedList() {
@@ -36,14 +36,13 @@ class LinkedList {
 
         void addAtEnd(Node* node) {
             if (this->head == NULL) {
-                this->head = node;
-                this->lastAddedAtEnd = node;
-                return;
+                this->head = node; 
+            } else {
+                node->prev = lastAddedAtEnd;
+                node->next = NULL;
+                lastAddedAtEnd->next = node;
             }
 
-            node->prev = lastAddedAtEnd;
-            node->next = NULL;
-            lastAddedAtEnd->next = node;
 
             this->enemiesReferences.insert(make_pair(node->enemyId, node));
             this->lastAddedAtEnd = node;
@@ -51,32 +50,57 @@ class LinkedList {
 
         void insertAfter(int prevEnemyId, Node* nodeToInsert) {
             Node* prevNode = this->enemiesReferences[prevEnemyId];
-            nodeToInsert->next = prevNode->next;
-            prevNode->next = nodeToInsert;
+
+            if (prevNode->next == NULL) {
+                nodeToInsert->prev = prevNode;
+                nodeToInsert->next = NULL;
+                prevNode->next = nodeToInsert;
+            } else {
+                nodeToInsert->next = prevNode->next;
+                prevNode->next->prev = nodeToInsert;
+                prevNode->next = nodeToInsert;
+                nodeToInsert->prev = prevNode;
+            }
 
             this->enemiesReferences.insert(make_pair(nodeToInsert->enemyId, nodeToInsert));
         }
 
         int amountBetweenNodes(int enemyIdStart, int enemyIdEnd) {
-            Node* node = this->enemiesReferences.find(enemyIdStart)->second->next;
-            int count = 0;
-            while (node->enemyId != enemyIdEnd) {
+            Node* node = this->enemiesReferences[enemyIdStart]->next;
+            int count = 0, found = 0;
+            while (node != NULL && node->enemyId != enemyIdEnd) {
                 count++;
                 node = node->next;
+                if (node != NULL && node->enemyId == enemyIdEnd) found = 1;
             }
+            
+            if (found) return count;
+
+            count = 0;
+            node = this->enemiesReferences[enemyIdStart]->prev;
+            while (node != NULL && node->enemyId != enemyIdEnd) {
+                count++;
+                node = node->prev;
+            }
+
             return count;
         }
 
         void remove(int enemyId) {
             Node* nodeToRemove = this->enemiesReferences[enemyId];
-            this->enemiesReferences.erase(enemyId);
-            Node* node = this->head;
-            while (node->next != nodeToRemove) {
-                node = node->next;
+            // this->enemiesReferences.erase(enemyId);
+            if (nodeToRemove->prev == NULL) { // is head
+                nodeToRemove = nodeToRemove->next;
+                nodeToRemove->prev = NULL;
             }
 
-            node->next = nodeToRemove->next;
-            free(nodeToRemove);
+            // free(nodeToRemove);
+        }
+
+        void debugEnemiesReferences() {
+            for (auto it = this->enemiesReferences.cbegin(); it != this->enemiesReferences.cend(); it++) {
+                printf("[%d] -> (%p) %d\n", it->first, it->second, it->second->enemyId);
+            }
         }
 
         void debug() {
@@ -123,12 +147,8 @@ vector <string> split(string text, char separator = ' ') {
 }
 
 int main() {
-    
-
-    printf("oi\n");
     LinkedList list;    
     assert(list.head == NULL);
-    printf("oi2\n");
 
     list.addAtEnd(new Node(1));    
     assert(list.head->enemyId == 1);
@@ -150,19 +170,41 @@ int main() {
 
     
     list.insertAfter(2, new Node(4));
-    list.debug();
     assert(list.head->next->enemyId == 2);
     assert(list.head->next->next->enemyId == 4);
     assert(list.head->next->next->next->enemyId == 3);
     assert(list.head->next->next->next->next == NULL);
     assert(list.head->next->next->next->prev->enemyId == 4);
-    assert(list.head->next->next->next->prev->prev->enemyId == 3);
+    assert(list.head->next->next->next->prev->prev->enemyId == 2);
 
-    printf("Oi8\n");
+    list.insertAfter(1, new Node(5));
+    assert(list.head->enemyId == 1);
+    assert(list.head->next->enemyId == 5);
+    assert(list.head->next->next->enemyId == 2);
+    assert(list.head->next->next->next->enemyId == 4);
+    assert(list.head->next->next->next->next->enemyId == 3);
+    assert(list.head->next->next->next->next->next == NULL);
+    assert(list.head->next->next->next->next->prev->enemyId == 4);
+    assert(list.head->next->next->next->next->prev->prev->enemyId == 2);
+    assert(list.head->next->next->next->next->prev->prev->prev->enemyId == 5);
+    assert(list.head->next->next->next->next->prev->prev->prev->prev->enemyId == 1);
 
-    // assert(list.amountBetweenNodes(1, 3) == 2);
-    // list.addAtEnd(new Node(5));
-    // assert(list.amountBetweenNodes(1, 5) == 3);
+    assert(list.amountBetweenNodes(1, 4) == 2);
+    assert(list.amountBetweenNodes(3, 5) == 2);
+    assert(list.amountBetweenNodes(1, 5) == 0);
+    assert(list.amountBetweenNodes(4, 2) == 0);
+    assert(list.amountBetweenNodes(1, 3) == 3);
+
+    list.remove(1);
+    list.debug();
+    assert(list.head->enemyId == 5);
+    assert(list.head->next->enemyId == 2);
+    assert(list.head->next->next->enemyId == 4);
+    assert(list.head->next->next->next->enemyId == 3);
+    assert(list.head->next->next->next->prev->enemyId == 4);
+    assert(list.head->next->next->next->prev->prev->enemyId == 2);
+    assert(list.head->next->next->next->prev->prev->prev->enemyId == 5);
+    assert(list.enemiesReferences[1] == NULL);
 
     // LinkedList enemies;
     // int n; scanf("%d", &n);
