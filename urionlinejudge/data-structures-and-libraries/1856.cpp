@@ -88,12 +88,21 @@ class LinkedList {
 
         void remove(int enemyId) {
             Node* nodeToRemove = this->enemiesReferences[enemyId];
-            // this->enemiesReferences.erase(enemyId);
+            
             if (nodeToRemove->prev == NULL) { // is head
-                nodeToRemove = nodeToRemove->next;
-                nodeToRemove->prev = NULL;
+                Node* node = nodeToRemove->next;
+                if (node != NULL) node->prev = NULL;
+                *nodeToRemove = *node;
+            } else if (nodeToRemove->next == NULL) { // is end
+                Node* prev = nodeToRemove->prev;
+                free(nodeToRemove); 
+                prev->next = NULL;
+                *nodeToRemove = *prev;
+            } else { // is middle
+                
             }
 
+            this->enemiesReferences.erase(enemyId);
             // free(nodeToRemove);
         }
 
@@ -196,7 +205,6 @@ int main() {
     assert(list.amountBetweenNodes(1, 3) == 3);
 
     list.remove(1);
-    list.debug();
     assert(list.head->enemyId == 5);
     assert(list.head->next->enemyId == 2);
     assert(list.head->next->next->enemyId == 4);
@@ -205,6 +213,26 @@ int main() {
     assert(list.head->next->next->next->prev->prev->enemyId == 2);
     assert(list.head->next->next->next->prev->prev->prev->enemyId == 5);
     assert(list.enemiesReferences[1] == NULL);
+
+    list.remove(3);
+    assert(list.head->enemyId == 5);
+    assert(list.head->next->enemyId == 2);
+    assert(list.head->next->next->enemyId == 4);
+    assert(list.head->next->next->next == NULL);
+    assert(list.head->next->next->prev->enemyId == 2);
+    assert(list.head->next->next->prev->prev->enemyId == 5);
+    assert(list.enemiesReferences[3] == NULL);
+
+    list.debug();
+    list.remove(2);
+    list.debug();
+    assert(list.head->enemyId == 5);
+    assert(list.head->next->enemyId == 4);
+    assert(list.head->next->next == NULL);
+    assert(list.head->next->prev->enemyId == 5);
+    assert(list.head->next->prev->prev == NULL);
+    assert(list.enemiesReferences[2] == NULL);
+
 
     // LinkedList enemies;
     // int n; scanf("%d", &n);
