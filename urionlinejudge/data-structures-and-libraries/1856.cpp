@@ -9,6 +9,7 @@
 using namespace std;
 
 
+
 class Node {
     public:
         int enemyId;
@@ -19,6 +20,10 @@ class Node {
             this->enemyId = enemyId;
         }
 };
+
+void debugNode(Node* node) {
+    printf("(%p) %d -> (%p) %d -> (%p) %d\n", node->prev, (node->prev != NULL) ? node->prev->enemyId : -666, node, node->enemyId, node->next, (node->next != NULL) ? node->next->enemyId : -666);
+}
 
 class LinkedList {
     private:
@@ -90,20 +95,17 @@ class LinkedList {
             Node* nodeToRemove = this->enemiesReferences[enemyId];
             
             if (nodeToRemove->prev == NULL) { // is head
-                Node* node = nodeToRemove->next;
-                if (node != NULL) node->prev = NULL;
-                *nodeToRemove = *node;
+                this->head = nodeToRemove->next;
+                this->head->prev = NULL;
             } else if (nodeToRemove->next == NULL) { // is end
-                Node* prev = nodeToRemove->prev;
-                free(nodeToRemove); 
-                prev->next = NULL;
-                *nodeToRemove = *prev;
+                nodeToRemove->prev->next = NULL;
             } else { // is middle
-                
+                nodeToRemove->next->prev = nodeToRemove->prev;
+                nodeToRemove->prev->next = nodeToRemove->next;
             }
 
             this->enemiesReferences.erase(enemyId);
-            // free(nodeToRemove);
+            free(nodeToRemove);
         }
 
         void debugEnemiesReferences() {
@@ -223,16 +225,19 @@ int main() {
     assert(list.head->next->next->prev->prev->enemyId == 5);
     assert(list.enemiesReferences[3] == NULL);
 
-    list.debug();
     list.remove(2);
-    list.debug();
     assert(list.head->enemyId == 5);
     assert(list.head->next->enemyId == 4);
     assert(list.head->next->next == NULL);
     assert(list.head->next->prev->enemyId == 5);
     assert(list.head->next->prev->prev == NULL);
     assert(list.enemiesReferences[2] == NULL);
-
+    
+    list.remove(4);
+    assert(list.head->enemyId == 5);
+    assert(list.head->next == NULL);
+    assert(list.head->prev == NULL);
+    assert(list.enemiesReferences[4] == NULL);
 
     // LinkedList enemies;
     // int n; scanf("%d", &n);
