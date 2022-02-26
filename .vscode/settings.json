@@ -67,6 +67,7 @@
         "map": "cpp",
         "__tree": "cpp",
         "set": "cpp",
-        "queue": "cpp"
+        "queue": "cpp",
+        "stdio.h": "c"
     }
 }
