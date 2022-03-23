@@ -5,6 +5,12 @@
 
 using namespace std;
 
+void print_vector(vector<string> v) {
+    for (auto item : v) {
+        printf("%s ", item.c_str());
+    }
+}
+
 vector<string> lesser_lexicographic_list(vector<string> list1, vector<string> list2) {
     for (int i = 0; i < list1.size(); i++) {
         if (list1[i] < list2[i]) return list1;
@@ -19,32 +25,36 @@ int index_of(vector<string> items, string target) {
     return -1;
 }
 
+int select_better_swap(vector<string> items) {
+    int index = -1;
+    for (int i = 0; i < items.size() - 1; i++) {
+        vector<string> copy = items;
+        string tmp = copy[i];
+        copy[i] = copy[i+1];
+        copy[i+1] = tmp;
+        if (copy[i] < items[i]) index = i;
+    }
+    return index;
+}
+
 vector<string> sorting(vector<string> names, int max_swaps, string target) {
     vector<string> result = names;
     if (result.size() == 1) return result;
 
     int swaps = 0;
-    int index = index_of(names, target);
-    while (swaps < max_swaps && index < names.size() - 1) {
-        while (result[index] > result[index + 1]) {
-            string tmp = result[index];
-            result[index] = result[index + 1];
-            result[index + 1] = tmp;
-            swaps++;
-            index--;
-            if (swaps == max_swaps || index < 0) break;
-        }
-        if (index < 0) break;
-        index++;
+    while (swaps < max_swaps) {
+        print_vector(result);
+        printf("\n");
+        int index = select_better_swap(result);
+        // printf("index: %d\n", index);
+        if (index == -1) break;
+        swaps++;
+        string tmp = result[index];
+        result[index] = result[index+1];
+        result[index+1] = tmp;
     }
 
     return result;
-}
-
-void print_vector(vector<string> v) {
-    for (auto item : v) {
-        printf("%s ", item.c_str());
-    }
 }
 
 int main() {
@@ -65,13 +75,9 @@ int main() {
         vector<string> answer = names;
         vector<string> sorted_names = names;
         sort(sorted_names.begin(), sorted_names.end());
-        // printf("Sorted: ");
-        // print_vector(sorted_names);
-        // printf("\n");
 
         for (int i = 0; i < sorted_names.size(); i++) {
             vector<string> sorted = sorting(names, k, sorted_names[i]);
-            lists.push_back(sorted);
             answer = lesser_lexicographic_list(answer, sorted);
         }
 
