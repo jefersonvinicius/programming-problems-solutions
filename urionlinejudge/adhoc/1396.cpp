@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <assert.h>
 
 using namespace std;
 
@@ -11,47 +12,32 @@ void print_vector(vector<string> v) {
     }
 }
 
-vector<string> lesser_lexicographic_list(vector<string> list1, vector<string> list2) {
-    for (int i = 0; i < list1.size(); i++) {
-        if (list1[i] < list2[i]) return list1;
-        else if (list2[i] < list1[i]) return list2;
-    }
-    return list1;
-}
-
-int index_of(vector<string> items, string target) {
-    vector<string>::iterator it = find(items.begin(), items.end(), target);
-    if (it != items.end()) return it - items.begin();
-    return -1;
-}
-
-int select_better_swap(vector<string> items) {
-    int index = -1;
-    for (int i = 0; i < items.size() - 1; i++) {
-        vector<string> copy = items;
-        string tmp = copy[i];
-        copy[i] = copy[i+1];
-        copy[i+1] = tmp;
-        if (copy[i] < items[i]) index = i;
+int smallest_index_of(vector<string> items, int start) {
+    string smallest = "";
+    int index;
+    for (int i = start; i < items.size(); i++) {
+        if (smallest.empty() || items[i] < smallest) {
+            smallest = items[i];
+            index = i;
+        }
     }
     return index;
 }
 
-vector<string> sorting(vector<string> names, int max_swaps, string target) {
+vector<string> sorting(vector<string> names, int max_swaps) {
     vector<string> result = names;
     if (result.size() == 1) return result;
 
-    int swaps = 0;
-    while (swaps < max_swaps) {
-        print_vector(result);
-        printf("\n");
-        int index = select_better_swap(result);
-        // printf("index: %d\n", index);
-        if (index == -1) break;
-        swaps++;
-        string tmp = result[index];
-        result[index] = result[index+1];
-        result[index+1] = tmp;
+    int swaps = max_swaps;
+    for (int i = 0; i < result.size() - 1 && swaps > 0; i++) {
+        int smallest = smallest_index_of(result, i);
+        if (smallest - i > swaps) continue;
+
+        for (int j = smallest; j > i; j--) {
+            swap(result[j], result[j-1]);
+        }
+
+        swaps -= (smallest - i);
     }
 
     return result;
@@ -71,15 +57,7 @@ int main() {
             names.push_back(name_c);
         }
 
-        vector<vector<string>> lists;
-        vector<string> answer = names;
-        vector<string> sorted_names = names;
-        sort(sorted_names.begin(), sorted_names.end());
-
-        for (int i = 0; i < sorted_names.size(); i++) {
-            vector<string> sorted = sorting(names, k, sorted_names[i]);
-            answer = lesser_lexicographic_list(answer, sorted);
-        }
+        vector<string> answer = sorting(names, k);
 
         printf("Instancia %d\n", instance);
         for (int i = 0; i < answer.size(); i++) {
