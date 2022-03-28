@@ -6,16 +6,12 @@
 
 using namespace std;
 
-void print_vector(vector<string> v) {
-    for (auto item : v) {
-        printf("%s ", item.c_str());
-    }
-}
-
-int smallest_index_of(vector<string> items, int start) {
+int smallest_index_of_with_max_swaps(vector<string> items, int start_at, int max_swaps) {
     string smallest = "";
     int index;
-    for (int i = start; i < items.size(); i++) {
+    for (int i = start_at; i < items.size(); i++) {
+        if (i - start_at > max_swaps) break;
+        
         if (smallest.empty() || items[i] < smallest) {
             smallest = items[i];
             index = i;
@@ -30,8 +26,7 @@ vector<string> sorting(vector<string> names, int max_swaps) {
 
     int swaps = max_swaps;
     for (int i = 0; i < result.size() - 1 && swaps > 0; i++) {
-        int smallest = smallest_index_of(result, i);
-        if (smallest - i > swaps) continue;
+        int smallest = smallest_index_of_with_max_swaps(result, i, swaps);
 
         for (int j = smallest; j > i; j--) {
             swap(result[j], result[j-1]);
