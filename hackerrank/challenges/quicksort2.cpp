@@ -1,4 +1,5 @@
 #include <bits/stdc++.h>
+
 using namespace std;
 
 void print_array(int array[], int size) {
@@ -8,7 +9,7 @@ void print_array(int array[], int size) {
     }
 }
 
-void partition(int array[], int left, int right) {
+int partition(int array[], int left, int right) {
     int size = right - left + 1;
     int lesser[size], bigger[size];
     int lesser_index = 0, bigger_index = 0;
@@ -24,25 +25,30 @@ void partition(int array[], int left, int right) {
         }
     }
 
-    print_array(lesser, lesser_index);
-    print_array(bigger, bigger_index);
-
     for (int i = 0; i < lesser_index; i++) {
         array[left+i] = lesser[i];
     }
 
-    array[lesser_index] = pivot;
+    int pivot_index = left + lesser_index;
+    array[pivot_index] = pivot;
 
     for (int i = 0; i < bigger_index; i++) {
-        array[lesser_index+i+1] = bigger[i];
+        array[pivot_index+i+1] = bigger[i];
     }
+
+    return pivot_index;
 }
 
 void quickSort(int array[], int left, int right) {
-    printf("QuickSort\n");
     if (left < right) {
-        partition(array, left + 1, right);
-        // partition(array, left, right);
+        int pivot_index = partition(array, left, right);
+        quickSort(array, left, pivot_index-1);
+        quickSort(array, pivot_index+1, right);
+
+        for (int i = left; i <= right; i++) {
+            printf("%d ", array[i]);
+        }
+        printf("\n");
     }
 }
 
