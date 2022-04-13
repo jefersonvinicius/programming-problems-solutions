@@ -33,33 +33,29 @@ class Node {
 
 class Tree {
     public:
-        Node root;
+        Node* root = NULL;
 
         Tree() {}
 
         string postOrder() {
             string result = "";
-            this->postOrderRecursion(&this->root, &result);
+            this->postOrderRecursion(this->root, &result);
             return result;
         }
 
         static Tree buildFromPreAndInOrder(string preOrder, string inOrder) {
-            printf("%s %s\n", preOrder.c_str(), inOrder.c_str());
             int preOrderIndex = 0;
-            Node root = Node(preOrder[preOrderIndex]);
-            int inIndex = indexOf(inOrder, 0, inOrder.size() - 1, root.value);
-            printf("inIndex: %d\n", inIndex);
+            Node *root = new Node(preOrder[preOrderIndex]);
+            int inIndex = indexOf(inOrder, 0, inOrder.size() - 1, root->value);
 
             Node* left = Tree::buildNode(preOrder, inOrder, 0, inIndex - 1, &preOrderIndex);
             Node* right = Tree::buildNode(preOrder, inOrder, inIndex + 1, inOrder.size() - 1, &preOrderIndex);
 
-            printf("%p\n", left);
-
             if (left != NULL) {
-                root.left = left;
+                root->left = left;
             }
             if (right != NULL) {
-                root.right = right;
+                root->right = right;
             }
 
             Tree tree = Tree();
@@ -69,25 +65,22 @@ class Tree {
 
     private:
         static Node* buildNode(string preOrder, string inOrder, int left, int right, int* preOrderIndex) {
-            if (left <= right) {
+            if (left <= right && *preOrderIndex < preOrder.size()) {
                 (*preOrderIndex)++;
-                Node root = Node(preOrder[*preOrderIndex]);
-                int inIndex = indexOf(inOrder, left, right, root.value);
-                printf("%d\n", inIndex);
-
-                Node* leftNode = Tree::buildNode(inOrder, preOrder, 0, inIndex - 1, preOrderIndex);
-                Node* rightNode = Tree::buildNode(inOrder, preOrder, inIndex + 1, right, preOrderIndex);
-
+                Node *root = new Node(preOrder[*preOrderIndex]);
+                int inIndex = indexOf(inOrder, left, right, root->value);
+                
+                Node* leftNode = Tree::buildNode(preOrder, inOrder, left, inIndex - 1, preOrderIndex);
+                Node* rightNode = Tree::buildNode(preOrder, inOrder, inIndex + 1, right, preOrderIndex);
+                
                 if (leftNode != NULL) {
-                    root.left = leftNode;
+                    root->left = leftNode;
                 }
                 if (rightNode != NULL) {
-                    root.right = rightNode;
+                    root->right = rightNode;
                 }
 
-                printf("root: %p -> %c\n", root, root.value);
-
-                return &root;
+                return root;
             }
             return NULL;
         }
