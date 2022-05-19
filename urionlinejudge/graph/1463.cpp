@@ -74,6 +74,8 @@ class Node {
 
         Node(char value) {
             this->value = value;
+            this->right = NULL;
+            this->left = NULL;
         }
 };
 
@@ -100,11 +102,13 @@ class Tree {
             while (!discovered.empty()) {
                 NodeLevel* next = discovered.front();
 
-                if (next->node->left != NULL) 
+                if (next->node->left) {
                     discovered.push(new NodeLevel(next->node->left, next->level + 1));
+                }
 
-                if (next->node->right != NULL) 
+                if (next->node->right) {
                     discovered.push(new NodeLevel(next->node->right, next->level + 1));
+                }
 
                 if (levels.find(next->level) != levels.end()) {
                     levels[next->level] = next->node->value + levels[next->level];
@@ -116,22 +120,23 @@ class Tree {
             }
 
             for (auto level : levels) {
-                printf("Nivel %d: %s\n", level.first, level.second.c_str());
+                printf("Nivel %d: %s\n", level.first - 1, level.second.c_str());
             }
-            
         }
 
         static Tree* buildTree(string postFixExpression) {
-            stack<Node*> nodes;
+            stack<Node*> nodes ;
             for (int i = 0; i < postFixExpression.size(); i++) {
                 char current = postFixExpression[i];
                 if (isalpha(current) || isdigit(current)) {
                     nodes.push(new Node(current));
                 } else {
-                    Node* pop1 = nodes.top();
-                    nodes.pop();
-                    Node* pop2 = nodes.top();
-                    nodes.pop();
+                    Node* pop1 = nodes.empty() ? NULL : nodes.top();
+                    if (pop1 != NULL)
+                        nodes.pop();
+                    Node* pop2 = nodes.empty() ? NULL : nodes.top();
+                    if (pop2 != NULL)
+                        nodes.pop();
                     Node* root = new Node(current);
                     root->left = pop1;
                     root->right = pop2; 
@@ -161,7 +166,6 @@ int main() {
         isFirstCase = false;
         tree->printLevelOrder();
     }
-
 
     return 0;
 }
