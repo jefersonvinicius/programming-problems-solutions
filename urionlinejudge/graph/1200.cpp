@@ -1,6 +1,10 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <stdio.h>
+#include <vector>
+#include <string>
+
+using namespace std;
 
 class Node {
     public:
@@ -27,6 +31,28 @@ class BSTree {
             this->insertAtNode(&this->root, value);
         }
 
+        Node* search(char target) {
+            return this->searchNode(this->root, target);
+        }
+
+        vector<char> preorder() {
+            vector<char> result;
+            this->preRecursive(this->root, &result);
+            return result;
+        }
+
+        vector<char> inorder() {
+            vector<char> result;
+            this->inRecursive(this->root, &result);
+            return result;
+        }
+
+        vector<char> postorder() {
+            vector<char> result;
+            this->postRecursive(this->root, &result);
+            return result;
+        }
+
     private:
         void insertAtNode(Node** node, char value) {
             if (*node == NULL) *node = new Node(value);
@@ -35,61 +61,76 @@ class BSTree {
             else
                 this->insertAtNode(&(*node)->left, value);
         }
+
+        Node* searchNode(Node* node, char target) {
+            if (node == NULL) return NULL;
+
+            if (node->value == target)
+                return node;
+            else if (target > node->value)
+                return this->searchNode(node->right, target);
+            else 
+                return this->searchNode(node->left, target);
+        }
+
+        void preRecursive(Node* node, vector<char>* result) {
+            if (node == NULL) return;
+
+            result->push_back(node->value);
+            this->preRecursive(node->left, result);
+            this->preRecursive(node->right, result);
+        }
+
+        void inRecursive(Node* node, vector<char>* result) {
+            if (node == NULL) return;
+
+            this->inRecursive(node->left, result);
+            result->push_back(node->value);
+            this->inRecursive(node->right, result);
+        }
+
+        void postRecursive(Node* node, vector<char>* result) {
+            if (node == NULL) return;
+
+            this->postRecursive(node->left, result);
+            this->postRecursive(node->right, result);
+            result->push_back(node->value);
+        }
 };
+
+void printVector(vector<char> v) {
+    int size = v.size();
+    for (int i = 0; i < size; i++) {
+        if (i == size - 1) printf("%c\n", v[i]);
+        else printf("%c ", v[i]);  
+    }
+}
 
 int main() {
 
-    { // should create empty tree
-        BSTree* tree = new BSTree();
-        assert(tree->root == NULL);
+    char commandCStr[20];
+    BSTree* tree = new BSTree();
+    while (scanf(" %[^\n]", commandCStr) != EOF) {
+        string command = commandCStr;
+        
+        if (command == "INFIXA") {
+            printVector(tree->inorder());
+        } else if (command == "PREFIXA") {
+            printVector(tree->preorder());
+        } else if (command == "POSFIXA") {
+            printVector(tree->postorder());
+        } else if (command[0] == 'I') {
+            tree->insert(command[2]);
+        } else {
+            char target = command[2];
+            Node* node = tree->search(target);
+            if (node == NULL) {
+                printf("%c nao existe\n", target);
+            } else {
+                printf("%c existe\n", node->value);
+            }
+        }
     }
-
-    { // should insert on root
-        BSTree* tree = new BSTree();
-        tree->insert('a');
-        assert(tree->root->value == 'a');
-
-    }
-
-    { // should insert on left of root when is lower
-        BSTree* tree = new BSTree();
-        tree->insert('b');
-        tree->insert('a');
-        assert(tree->root->value == 'b');
-        assert(tree->root->left->value == 'a');
-        assert(tree->root->right == NULL);
-    }
-
-    { // should insert on right of root when is lower
-        BSTree* tree = new BSTree();
-        tree->insert('b');
-        tree->insert('a');
-        tree->insert('c');
-        assert(tree->root->value == 'b');
-        assert(tree->root->left->value == 'a');
-        assert(tree->root->right->value == 'c');
-    }
-
-    { // should insert correctly the values
-        BSTree* tree = new BSTree();
-        tree->insert('m');
-        tree->insert('o');
-        tree->insert('p');
-        tree->insert('n');
-        tree->insert('b');
-        tree->insert('a');
-        tree->insert('c');
-        tree->insert('z');
-        assert(tree->root->value == 'm');
-        assert(tree->root->right->value == 'o');
-        assert(tree->root->right->right->value == 'p');
-        assert(tree->root->right->left->value == 'n');
-        assert(tree->root->left->value == 'b');
-        assert(tree->root->left->left->value == 'a');
-        assert(tree->root->left->right->value == 'c');
-        assert(tree->root->right->right->right->value == 'z');
-    }
-
 
     return 0;
 }
