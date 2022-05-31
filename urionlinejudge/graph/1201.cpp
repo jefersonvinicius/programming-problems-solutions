@@ -26,6 +26,9 @@ class Node {
             return this->right == NULL && this->left != NULL;
         }
         
+        bool hasOnlyRight() {
+            return this->right != NULL && this->left == NULL;
+        }
 };
 
 class BSTree {
@@ -87,10 +90,11 @@ class BSTree {
         }
 
         Node* removeNode(Node** node, int target) {
-            printf("%d\n", (*node)->value);
+            if ((*node) == NULL) return NULL;
+
             if ((*node)->value == target) {
-                Node* found = *node;
-                
+                Node* found = new Node((*node)->value);
+
                 if ((*node)->hasNoChildren()) {
                     *node = NULL;
                     free(*node);
@@ -98,6 +102,22 @@ class BSTree {
                     (*node)->value = (*node)->left->value;
                     (*node)->left = NULL;
                     free((*node)->left);
+                } else if ((*node)->hasOnlyRight()) {
+                    (*node)->value = (*node)->right->value;
+                    (*node)->right = NULL;
+                    free((*node)->right);
+                } else {
+                    Node** largest = this->findLargestNode(&(*node)->left);
+                    if ((*largest)->hasNoChildren()) {
+                        (*node)->value = (*largest)->value;
+                        *largest = NULL;
+                        free(*largest);
+                    } else {
+                        (*node)->value = (*largest)->value;
+                        (*largest)->value = (*largest)->left->value;
+                        (*largest)->left = NULL;
+                        free((*largest)->left);
+                    }
                 }
 
                 return found;
@@ -131,6 +151,11 @@ class BSTree {
             this->postRecursive(node->right, result);
             result->push_back(node->value);
         }
+
+        Node** findLargestNode(Node** from) {
+            if ((*from)->right == NULL) return from;
+            return this->findLargestNode(&(*from)->right);
+        }
 };
 
 void printVector(vector<int> v) {
@@ -141,65 +166,41 @@ void printVector(vector<int> v) {
     }
 }
 
+int extractCommandValue(string str) {
+    string result;
+    for (int i = 2; i < str.size(); i++) {
+        result += str[i];
+    }
+    return stoi(result);
+}
+
 int main() {
 
-    { // should delete node without children
-        BSTree* tree = new BSTree();
-        tree->insert(10);
-        tree->insert(5);
-        tree->insert(20);
-        tree->insert(4);
-        tree->insert(6);
-        tree->insert(8);
-        tree->insert(7);
-        tree->insert(9);
-        Node* removed = tree->remove(4);
-        assert(tree->root->left->value == 5);
-        assert(tree->root->left->left == NULL);
-        assert(removed->value == 4);
-    }
-
-    { // should delete node with only left child
-        BSTree* tree = new BSTree();
-        tree->insert(10);
-        tree->insert(5);
-        tree->insert(20);
-        tree->insert(4);
-        tree->insert(6);
-        tree->insert(8);
-        tree->insert(7);
-        tree->insert(9);
-        tree->insert(15);
-        Node* removed = tree->remove(20);
-        assert(tree->root->right->value == 15);
-        assert(tree->root->right->left == NULL);
-        printf("-> %d\n", removed->value);
-        assert(removed->value == 20);
-    }
-
-    // char commandCStr[20];
-    // BSTree* tree = new BSTree();
-    // while (scanf(" %[^\n]", commandCStr) != EOF) {
-    //     string command = commandCStr;
+    char commandCStr[20];
+    BSTree* tree = new BSTree();
+    while (scanf(" %[^\n]", commandCStr) != EOF) {
+        string command = commandCStr;
         
-    //     if (command == "INFIXA") {
-    //         printVector(tree->inorder());
-    //     } else if (command == "PREFIXA") {
-    //         printVector(tree->preorder());
-    //     } else if (command == "POSFIXA") {
-    //         printVector(tree->postorder());
-    //     } else if (command[0] == 'I') {
-    //         tree->insert(command[2]);
-    //     } else {
-    //         char target = command[2];
-    //         Node* node = tree->search(target);
-    //         if (node == NULL) {
-    //             printf("%c nao existe\n", target);
-    //         } else {
-    //             printf("%c existe\n", node->value);
-    //         }
-    //     }
-    // }
+        if (command == "INFIXA") {
+            printVector(tree->inorder());
+        } else if (command == "PREFIXA") {
+            printVector(tree->preorder());
+        } else if (command == "POSFIXA") {
+            printVector(tree->postorder());
+        } else if (command[0] == 'I') {
+            tree->insert(extractCommandValue(command));
+        } else if (command[0] == 'R') {
+            tree->remove(extractCommandValue(command));
+        } else {
+            int target = extractCommandValue(command);
+            Node* node = tree->search(target);
+            if (node == NULL) {
+                printf("%d nao existe\n", target);
+            } else {
+                printf("%d existe\n", node->value);
+            }
+        }
+    }
 
     return 0;
 }
