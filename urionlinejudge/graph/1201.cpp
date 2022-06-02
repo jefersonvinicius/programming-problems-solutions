@@ -99,24 +99,20 @@ class BSTree {
                     *node = NULL;
                     free(*node);
                 } else if ((*node)->hasOnlyLeft()) {
-                    (*node)->value = (*node)->left->value;
-                    (*node)->left = NULL;
-                    free((*node)->left);
+                    (*node) = (*node)->left;
                 } else if ((*node)->hasOnlyRight()) {
-                    (*node)->value = (*node)->right->value;
-                    (*node)->right = NULL;
-                    free((*node)->right);
+                    (*node) = (*node)->right;
                 } else {
                     Node** largest = this->findLargestNode(&(*node)->left);
+                    (*node)->value = (*largest)->value;
                     if ((*largest)->hasNoChildren()) {
-                        (*node)->value = (*largest)->value;
                         *largest = NULL;
                         free(*largest);
                     } else {
-                        (*node)->value = (*largest)->value;
-                        (*largest)->value = (*largest)->left->value;
-                        (*largest)->left = NULL;
-                        free((*largest)->left);
+                        Node* left = (*largest)->left;
+                        (*largest) = (*largest)->left;
+                        left = NULL;
+                        free(left);
                     }
                 }
 
@@ -175,7 +171,6 @@ int extractCommandValue(string str) {
 }
 
 int main() {
-
     char commandCStr[20];
     BSTree* tree = new BSTree();
     while (scanf(" %[^\n]", commandCStr) != EOF) {
