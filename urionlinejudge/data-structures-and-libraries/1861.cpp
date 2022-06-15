@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string>
 #include <assert.h>
+#include <vector>
+#include <unordered_map>
 
 using namespace std;
 
@@ -26,6 +28,18 @@ class Node {
             this->left = NULL;
             this->right = NULL;
         }
+
+        bool hasNoneChildren() {
+            return this->left == NULL && this->right == NULL;
+        }
+
+        bool hasOnlyLeft() {
+            return this->left != NULL && this->right == NULL;
+        }
+
+        bool hasOnlyRight() {
+            return this->left == NULL && this->right != NULL;
+        }
 };
 
 class BSTree {
@@ -45,13 +59,20 @@ class BSTree {
         }
 
         void remove(string murderName) {
+            this->removeNode(&this->root, murderName);
+        }
 
+        vector<Murder*> getMurders() {
+            vector<Murder*> result;
+            this->getMurderNode(this->root, &result);
+            return result;
         }
 
     private:
         void insertNode(Node** node, string murderName) {
             if (*node == NULL) {
                 *node = new Node(murderName);
+                (*node)->value->killed++;
             } else if (murderName > (*node)->value->name) {
                 this->insertNode(&(*node)->right, murderName);
             } else {
@@ -60,10 +81,39 @@ class BSTree {
         } 
 
         void removeNode(Node** node, string target) {
-            if (*node != NULL && (*node)->value->name == target) {
+            if (*node == NULL) return;
 
-            } else if (target > (*node)->value->name && (*node)->right) {
-                
+            if ((*node)->value->name == target) {
+                if ((*node)->hasNoneChildren()) {
+                    *node = NULL;
+                    free(*node);
+                } else if ((*node)->hasOnlyLeft()) {
+                    Node* hold = (*node)->left;
+                    *node = (*node)->left;
+                    hold = NULL;
+                    free(hold);
+                } else if ((*node)->hasOnlyRight()) {
+                    Node* hold = (*node)->right;
+                    *node = (*node)->right;
+                    hold = NULL;
+                    free(hold);
+                } else {
+                    Node** greatest = this->findGreatest(&(*node)->left);
+                    (*node)->value = (*greatest)->value;
+                    if ((*greatest)->hasNoneChildren()) {
+                        (*greatest) = NULL;
+                        free(*greatest);
+                    } else {
+                        Node* hold = (*greatest)->left;
+                        (*greatest) = (*greatest)->left;
+                        hold = NULL;
+                        free(hold);
+                    }
+                }
+            } else if (target > (*node)->value->name) {
+                this->removeNode(&(*node)->right, target);
+            } else {
+                this->removeNode(&(*node)->left, target);
             }
         }
 
@@ -76,38 +126,41 @@ class BSTree {
             else 
                 return this->searchNode(node->left, target);
         }
+
+        void getMurderNode(Node* node, vector<Murder*>* result) {
+            if (node == NULL) return;
+
+            this->getMurderNode(node->left, result);
+            result->push_back(node->value);
+            this->getMurderNode(node->right, result);
+        }
+
+        Node** findGreatest(Node** node) {
+            if ((*node)->right == NULL) return node;
+            return this->findGreatest(&(*node)->right);
+        }
 };
 
 int main() {
 
-    { // should insert
-        BSTree* tree = new BSTree();
-        tree->insert("Jeferson");
-        tree->insert("Isa");
-        tree->insert("Zefa");
-        assert(tree->root->value->name == "Jeferson");
-        assert(tree->root->right->value->name == "Zefa");
-        assert(tree->root->left->value->name == "Isa");
+    char murderNameC[12], killedNameC[12];
+    BSTree* hallOfMurders = new BSTree();
+    vector<string> killedNames;
+    while (scanf("%s %s", murderNameC, killedNameC) != EOF) {
+        string murderName = murderNameC, killedName = killedNameC;    
+        hallOfMurders->insert(murderName);        
+        killedNames.push_back(killedName);
     }
 
-    { // should insert
-        BSTree* tree = new BSTree();
-        tree->insert("Jeferson");
-        tree->insert("Isa");
-        tree->insert("Zefa");
-        tree->insert("Isa");
-        assert(tree->root->value->name == "Jeferson");
-        assert(tree->root->value->killed == 0);
-        assert(tree->root->right->value->name == "Zefa");
-        assert(tree->root->right->value->killed == 0);
-        assert(tree->root->left->value->name == "Isa");
-        assert(tree->root->left->value->killed == 1);
+    for (string name : killedNames) {
+        hallOfMurders->remove(name);
     }
 
-    // char murderNameC[12], killedNameC[12];
-    // while (scanf("%s %s", murderNameC, killedNameC) != EOF) {
-    //     string murderName = murderNameC, killedName = killedNameC;
-    // }
+    printf("HALL OF MURDERERS\n");
+    vector<Murder*> murders = hallOfMurders->getMurders();
+    for (Murder* murder : murders) {
+        printf("%s %d\n", murder->name.c_str(), murder->killed);
+    }
 
     return 0;
 }
