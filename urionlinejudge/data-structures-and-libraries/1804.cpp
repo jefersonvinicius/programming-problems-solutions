@@ -1,6 +1,9 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <algorithm>
+
+using namespace std;
 
 #define MAX_BUGGIES 10005
 
@@ -35,7 +38,7 @@ class BITree {
             this->raw[index] = 0;
             int valueBeingRemoved = this->raw[at];
             while (index <= n) {
-                this->indexed[index] -= valueBeingRemoved;
+                this->indexed[index] = max(indexed[index] - valueBeingRemoved, 0);
                 index += index & (-index);
             }
         }
@@ -64,24 +67,21 @@ int main() {
     
     int n; scanf("%d", &n);
     BITree* tree = new BITree();
-    while (n--) {
-        printf("n: %d\n", n);
+    for (int i = 0; i < n; i++) {
         int x; scanf("%d", &x);
         tree->insert(x);
     }
 
-    char s[100];
-    int operation = 0, value = 0;
-    scanf(" %[^\n]", s);
-    printf("S: %s\n", s);
-    // while (scanf("%d %d", &operation, &value) != EOF) {
-        // if (operation == 'a')
-        printf(">> %d %d\n", operation, value);
-        // for (int i = 0; i < 100000000; i++) {}
-            // tree->remove(value - 1);
-        // else
-            // printf("%d\n", tree->sum(value - 1));
-    // }
+    char operation[1];
+    int value;
+    while (scanf("%s %d", operation, &value) != EOF) {
+        tree->print();
+        printf("%d\n", strcmp(operation, "a"));
+        if (strcmp(operation, "a") == 0)
+            tree->remove(value - 1);
+        else
+            printf("%d\n", tree->sum(value - 1));
+    }
 
     return 0;
 }
