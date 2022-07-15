@@ -33,11 +33,11 @@ class BITree {
         }
 
         void remove(int at) {
-            int n = this->size;
             int index = at + 1;
+            int valueBeingRemoved = this->raw[index];
             this->raw[index] = 0;
-            int valueBeingRemoved = this->raw[at];
-            while (index <= n) {
+            this->indexed[index] = 0;
+            while (index <= this->size) {
                 this->indexed[index] = max(indexed[index] - valueBeingRemoved, 0);
                 index += index & (-index);
             }
@@ -76,11 +76,10 @@ int main() {
     int value;
     while (scanf("%s %d", operation, &value) != EOF) {
         tree->print();
-        printf("%d\n", strcmp(operation, "a"));
         if (strcmp(operation, "a") == 0)
             tree->remove(value - 1);
         else
-            printf("%d\n", tree->sum(value - 1));
+            printf("%d\n", tree->sum(value - 2));
     }
 
     return 0;
