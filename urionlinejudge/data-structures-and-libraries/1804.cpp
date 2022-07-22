@@ -5,7 +5,7 @@
 
 using namespace std;
 
-#define MAX_BUGGIES 10005
+#define MAX_BUGGIES 100005
 
 class BITree {
 
@@ -36,7 +36,6 @@ class BITree {
             int index = at + 1;
             int valueBeingRemoved = this->raw[index];
             this->raw[index] = 0;
-            this->indexed[index] = 0;
             while (index <= this->size) {
                 this->indexed[index] = max(indexed[index] - valueBeingRemoved, 0);
                 index += index & (-index);
@@ -75,7 +74,6 @@ int main() {
     char operation[1];
     int value;
     while (scanf("%s %d", operation, &value) != EOF) {
-        tree->print();
         if (strcmp(operation, "a") == 0)
             tree->remove(value - 1);
         else
