@@ -28,7 +28,19 @@ class BITree {
         }
 
         void remove(int index) {
-            
+            this->raw[index] = 0;
+            for (int i = index; i <= this->size; i += i & (-i)) {
+                this->indexed[i] -= this->indexed[index];
+            }
+        }
+
+        int sum(int start) {
+            int result = 0;
+            for (int i = this->size; i > start; i -= i & (-i)) {
+                // printf("index: %d\n", i);
+                result += this->indexed[i];
+            }
+            return result;
         }
 };
 
@@ -73,16 +85,27 @@ int main() {
         // print_array(memo, n+1);
 
 
-        int result = 0;
-        for (int player = 1; player <= n; player++) {
-            result += memo[player];
-            int playerIndex = playersIndexes[player];
-            for (int i = playerIndex - 1; i >= 0; i--) {
-                int playerToUpdate = playersIndexes[i];
-                memo[playerToUpdate]--;
-            }
-        }
-        printf("%d\n", result);
+        // int result = 0;
+        // for (int player = 1; player <= n; player++) {
+        //     result += memo[player];
+        //     int playerIndex = playersIndexes[player];
+        //     for (int i = playerIndex - 1; i >= 0; i--) {
+        //         int playerToUpdate = playersIndexes[i];
+        //         memo[playerToUpdate]--;
+        //     }
+        // }
+        // printf("%d\n", result);
+        printf("result: 1 -> %d\n", tree->sum(1));
+        printf("result: 2 -> %d\n", tree->sum(2));
+        printf("result: 3 -> %d\n", tree->sum(3));
+        printf("result: 4 -> %d\n", tree->sum(4));
+        
+        tree->remove(3);
+        printf("raw: ");
+        print_array(tree->raw, tree->playerAmount);
+        printf("indexed: ");
+        print_array(tree->indexed, tree->playerAmount);
+        printf("result: %d\n", tree->sum(1));
     }
 
     return 0;
