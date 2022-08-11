@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <algorithm>
+
+using namespace std;
 
 #define MAX_PLAYERS 1000000
 
@@ -19,24 +22,28 @@ class BITree {
 
         void insert(int value) {
             this->raw[this->size] = value;
-            int index = this->size, result = value;
-            for (int i = index; i > 0; i -= i & (-i)) {
-                result += this->indexed[i];
+            int startAt = this->size - (this->size & (-this->size)); 
+            int result = 0;
+            for (int i = startAt; i < this->size; i++) {
+                result += this->raw[i];
+                // result += 1;
             }
             this->indexed[this->size] = result;
             this->size++;
         }
 
         void remove(int index) {
-            this->raw[index] = 0;
-            for (int i = index; i <= this->size; i += i & (-i)) {
-                this->indexed[i] -= this->indexed[index];
+            int value = -this->raw[index];
+            printf("Value: %d\n", value);
+            for (int i = index + (index & (-index)); i <= this->size; i += i & (-i)) {
+                this->indexed[i] += value;
             }
+            this->raw[index] = 0;
         }
 
         int sum(int start) {
             int result = 0;
-            for (int i = this->size; i > start; i -= i & (-i)) {
+            for (int i = start; i > 0; i -= i & (-i)) {
                 // printf("index: %d\n", i);
                 result += this->indexed[i];
             }
@@ -67,8 +74,8 @@ int main() {
             playersIndexes[x] = i;
         }
 
-        for (int i = 0; i < n; i++)
-            tree->insert(i);
+        for (int i = n-1; i >= 0; i--)
+            tree->insert(1);
 
         int memo[n + 1];
         for (int i = 1; i <= n; i++) {
@@ -105,7 +112,10 @@ int main() {
         print_array(tree->raw, tree->playerAmount);
         printf("indexed: ");
         print_array(tree->indexed, tree->playerAmount);
-        printf("result: %d\n", tree->sum(1));
+        printf("result: 1 -> %d\n", tree->sum(1));
+        printf("result: 2 -> %d\n", tree->sum(2));
+        printf("result: 3 -> %d\n", tree->sum(3));
+        printf("result: 4 -> %d\n", tree->sum(4));
     }
 
     return 0;
