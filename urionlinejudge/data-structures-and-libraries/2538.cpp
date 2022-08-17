@@ -24,10 +24,7 @@ class Gym {
         }
 
         void addAnalogimon(Analogimon* analogimon) {
-            
             vector<Analogimon*> withinRules = this->getAnalogimonWithCPWithinDiffOfPIAndCP(analogimon);
-
-            printf("Within: %ld\n", withinRules.size());
             if (withinRules.size() <= analogimon->numberOfAttacks)
                 this->analogimons.push_back(analogimon);            
         }
@@ -39,7 +36,7 @@ class Gym {
             int rangeEnd = analogimonBeingPut->combatPower + this->powerInterval;   
             for (int i = 0; i < this->analogimons.size(); i++) {
                 Analogimon* analogimon = this->analogimons[i];
-                if (analogimon->combatPower > rangeStart && analogimon->combatPower <= rangeEnd) {
+                if (analogimon->combatPower >= rangeStart && analogimon->combatPower <= rangeEnd) {
                     result.push_back(analogimon);
                 }
             }
@@ -92,6 +89,25 @@ int main() {
         gym->addAnalogimon(new Analogimon(10, 2));
 
         assert(gym->analogimons.size() == 4);
+    }
+
+     // should add when analogimons within rules (end of range) is equal than Number of Attack of analogimon being put
+    { 
+        Gym* gym = new Gym(3);
+        gym->addAnalogimon(new Analogimon(5, 2));
+        assert(gym->analogimons.size() == 1);
+        gym->addAnalogimon(new Analogimon(13, 1));
+        assert(gym->analogimons.size() == 2);
+        gym->addAnalogimon(new Analogimon(8, 1));
+        assert(gym->analogimons.size() == 3);
+        gym->addAnalogimon(new Analogimon(20, 5));
+        assert(gym->analogimons.size() == 4);
+        gym->addAnalogimon(new Analogimon(6, 1));
+        assert(gym->analogimons.size() == 4);
+        gym->addAnalogimon(new Analogimon(11, 1));
+        assert(gym->analogimons.size() == 4);
+        gym->addAnalogimon(new Analogimon(10, 4));
+        assert(gym->analogimons.size() == 5);
     }
 
     int pi, m; scanf("%d%d", &pi, &m);
