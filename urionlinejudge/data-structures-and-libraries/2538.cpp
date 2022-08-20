@@ -1,5 +1,6 @@
 #include "stdio.h"
 #include "assert.h"
+#include "stdlib.h"
 #include <vector>
 
 using namespace std;
@@ -36,9 +37,11 @@ class Gym {
             int rangeEnd = analogimonBeingPut->combatPower + this->powerInterval;   
             for (int i = 0; i < this->analogimons.size(); i++) {
                 Analogimon* analogimon = this->analogimons[i];
-                if (analogimon->combatPower >= rangeStart && analogimon->combatPower <= rangeEnd) {
+                if (analogimon->combatPower >= rangeStart && analogimon->combatPower <= rangeEnd)
                     result.push_back(analogimon);
-                }
+                
+                if (result.size() > analogimonBeingPut->numberOfAttacks)
+                    break;
             }
             return result;
         }
@@ -110,14 +113,16 @@ int main() {
         assert(gym->analogimons.size() == 5);
     }
 
-    int pi, m; scanf("%d%d", &pi, &m);
-    Gym* gym = new Gym(pi);
-    for (int i = 0; i < m; i++) {
-        int cp, na; scanf("%d%d", &cp, &na);
-        gym->addAnalogimon(new Analogimon(cp, na));
+    int pi, m;
+    while (scanf("%d%d", &pi, &m) != EOF) {
+        Gym* gym = new Gym(pi);
+        for (int i = 0; i < m; i++) {
+            int cp, na; scanf("%d%d", &cp, &na);
+            gym->addAnalogimon(new Analogimon(cp, na));
+        }
+        printf("%ld\n", gym->analogimons.size());
+        free(gym);
     }
-
-    printf("%ld\n", gym->analogimons.size());
 
     return 0;
 }
