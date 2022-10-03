@@ -1,14 +1,15 @@
 #include "stdio.h"
 #include "string.h"
 
-#define MAX_FLOORS 1000000
+#define MAX_FLOORS 1000002
 
 int main() {
 
     int floors, start, goal, up, down; scanf("%d%d%d%d%d", &floors, &start, &goal, &up, &down);
 
     int press = 0, current = start;
-    int visited[MAX_FLOORS]; memset(visited, 0, MAX_FLOORS);
+    int visited[MAX_FLOORS]; for (int i = 0; i < MAX_FLOORS; i++) visited[i] = 0;
+    
     while (true) {
         if (visited[current] == 1) {
             press = -1;
