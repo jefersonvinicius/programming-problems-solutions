@@ -2,17 +2,38 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <queue>
 
 using namespace std;
 
-class Spam;
-class Person;
+class Spam {
+    public:
+        int id, initialThreshold, finalThreshold, personIdStart;
+        vector<string> labels;
+
+        Spam(int initialThreshold, int finalThreshold, vector<string> labels) {
+            this->initialThreshold = initialThreshold;
+            this->finalThreshold = finalThreshold;
+            this->labels = labels;
+        }
+};
 
 class Person {
     private:
         unordered_map<int, Person*> friends;
-        unordered_map<string, bool> spammedTrack;
+        unordered_map<Spam*, bool> spamsReceived;
         unordered_map<Spam*, int> spamsCount;
+
+        bool hasReceived(Spam* spam) {
+            if (this->spamsReceived.find(spam) != this->spamsReceived.end())
+                return true;
+            return false;
+        }
+
+        void addReceived(Spam* spam) {
+            this->spamsReceived[spam] = true;
+        }
+
     public:
         int id, spammed;
         string name;
@@ -21,10 +42,6 @@ class Person {
             this->id = id;
             this->name = name;
             this->spammed = 0;
-        }
-
-        void incrementSpammed() {
-            this->spammed++;
         }
 
         int friendsAmount() {
@@ -42,10 +59,9 @@ class Person {
         }
 
         void sendSpam(Spam* spam, Person* beingSpammed) {
-            string key = to_string(spam->id) + "-" + to_string(beingSpammed->id);
-            if (this->spammedTrack[key] != true) {
+            if (!beingSpammed->hasReceived(spam)) {
                 this->spamsCount[spam]++;
-                this->spammedTrack[key] = true;
+                beingSpammed->addReceived(spam);
             }
         }
 
@@ -54,29 +70,37 @@ class Person {
                 return this->spamsCount[spam]; 
             return 0;
         }
+
+        string getAttributeFor(Spam* spam) {
+            int spammed = this->countSpammed(spam);
+            if (spammed < spam->initialThreshold)
+                return spam->labels[0];
+            if (spammed >= spam->initialThreshold && spammed < spam->finalThreshold)
+                return spam->labels[1];
+        
+            return spam->labels[2];
+        }
 };
 
-class Spam {
+class Network {
+
+    private:
+        vector<Person*> people;
+        vector<Spam*> spams;
+
     public:
-        int id, initialThreshold, finalThreshold;
-        vector<string> labels;
-
-        Spam(int id, int initialThreshold, int finalThreshold, vector<string> labels) {
-            this->id = id;
-            this->initialThreshold = initialThreshold;
-            this->finalThreshold = finalThreshold;
-            this->labels = labels;
-        }
-
-        string determinePersonAttribute(Person* person) {
-            if (person->spammed < this->initialThreshold)
-                return labels[0];
-            if (person->spammed >= this->initialThreshold && person->spammed < this->finalThreshold)
-                return labels[1];
+        vector<string> getPersonAttributes(int personId) {
             
-            return labels[2];
-        }
+            for (int i = 0; i < this->spams.size(); i++) {
+                Spam* spam = this->spams[i];
+            }
+            queue<Person*> pending;
+            return {"rich", "sad"};
+        }  
 
+        void addPerson(Person* person) {}
+
+        void addSpam(Spam* spam, int initialIndex) {} 
 };
 
 void tests() {
@@ -88,7 +112,7 @@ void tests() {
     }
 
     { // spam creation
-        Spam* spam = new Spam(1, 2, 5, {"poor", "medium", "rich"});
+        Spam* spam = new Spam(2, 5, {"poor", "medium", "rich"});
         assert(spam->initialThreshold == 2);
         assert(spam->finalThreshold == 5);
         assert(spam->labels[0] == "poor");
@@ -99,8 +123,8 @@ void tests() {
     { // person send spam
         Person* person = new Person(1, "Jeferson");
         Person* pFriend = new Person(2, "Any");
-        Spam* spam = new Spam(1, 2, 5, {"poor", "medium", "rich"});
-        Spam* spam2 = new Spam(1, 3, 6, {"sad", "medium", "happy"});
+        Spam* spam = new Spam(2, 5, {"poor", "medium", "rich"});
+        Spam* spam2 = new Spam(3, 6, {"sad", "medium", "happy"});
         person->sendSpam(spam, pFriend);
         assert(person->countSpammed(spam) == 1);
         person->sendSpam(spam, pFriend);
@@ -111,19 +135,19 @@ void tests() {
     }
 
     { // spam and user attribute
-        Spam* spam = new Spam(1, 2, 5, {"poor", "medium", "rich"});
+        Spam* spam = new Spam(2, 5, {"poor", "medium", "rich"});
         Person* person = new Person(1, "Jeferson");
-        assert(spam->determinePersonAttribute(person) == "poor");
-        person->incrementSpammed();
-        person->incrementSpammed();
-        assert(spam->determinePersonAttribute(person) == "medium");
-        person->incrementSpammed();
-        assert(spam->determinePersonAttribute(person) == "medium");
-        person->incrementSpammed();
-        person->incrementSpammed();
-        assert(spam->determinePersonAttribute(person) == "rich");
-        person->incrementSpammed();
-        assert(spam->determinePersonAttribute(person) == "rich");        
+        assert(person->getAttributeFor(spam) == "poor");
+        person->sendSpam(spam, new Person(2, "Any 1"));
+        person->sendSpam(spam, new Person(3, "Any 2"));
+        assert(person->getAttributeFor(spam) == "medium");
+        person->sendSpam(spam, new Person(4, "Any 3"));
+        assert(person->getAttributeFor(spam) == "medium");
+        person->sendSpam(spam, new Person(5, "Any 4"));
+        person->sendSpam(spam, new Person(6, "Any 5"));
+        assert(person->getAttributeFor(spam) == "rich");
+        person->sendSpam(spam, new Person(7, "Any 6"));
+        assert(person->getAttributeFor(spam) == "rich");
     }
 
     { // Add friend
@@ -132,6 +156,22 @@ void tests() {
         person->addFriend(new Person(2, "Any"));
         assert(person->friendsAmount() == 1);
         assert(person->getFriendById(2)->name == "Any");
+    }
+
+    { // spamming
+        Person* person = new Person(1, "Jeferson");
+        person->addFriend(new Person(2, "Any 2"));
+        person->addFriend(new Person(3, "Any 3"));
+        person->addFriend(new Person(4, "Any 4"));
+
+
+        Network* network = new Network();
+        network->addPerson(person);
+        network->addPerson(new Person(5, "Any 5"));
+        network->addSpam(new Spam(2, 5, {"poor", "rich", "millionaire"}), 0);
+        network->addSpam(new Spam(2, 5, {"sad", "normal", "happy"}), 1);
+        assert(network->getPersonAttributes(1)[0] == "rich");
+        assert(network->getPersonAttributes(1)[1] == "sad");
     }
 }
 
