@@ -71,6 +71,12 @@ class Person {
             return 0;
         }
 
+        vector<Person*> getFriends() {
+            vector<Person*> result;
+            for (auto a : this->friends) result.push_back(a.second);
+            return result;
+        }
+
         string getAttributeFor(Spam* spam) {
             int spammed = this->countSpammed(spam);
             if (spammed < spam->initialThreshold)
@@ -82,26 +88,70 @@ class Person {
         }
 };
 
+class SpamIndexed {
+    public: 
+        Spam* spam;
+        int index;
+
+        SpamIndexed(Spam* spam, int index) {
+            this->spam = spam;
+            this->index = index;
+        }
+};
+
 class Network {
 
     private:
         vector<Person*> people;
-        vector<Spam*> spams;
+        vector<SpamIndexed*> spams;
 
     public:
-        vector<string> getPersonAttributes(int personId) {
-            
+        vector<string> getPersonAttributes(int personIndex) {
+            vector<string> result;
+            Person* person = this->people[personIndex];
             for (int i = 0; i < this->spams.size(); i++) {
-                Spam* spam = this->spams[i];
+                Spam* spam = this->spams[i]->spam;
+                result.push_back(person->getAttributeFor(spam));
             }
-            queue<Person*> pending;
-            return {"rich", "sad"};
+            return result;
         }  
 
-        void addPerson(Person* person) {}
+        void startSpamming() {
+            for (int i = 0; i < this->spams.size(); i++) {
+                SpamIndexed* spam = this->spams[i];
+                this->spamming(this->people[spam->index], spam->spam);
+            }
+        }
 
-        void addSpam(Spam* spam, int initialIndex) {} 
+        void addPerson(Person* person) {
+            this->people.push_back(person);
+        }
+
+        void addSpam(Spam* spam, int initialIndex) {
+            this->spams.push_back(new SpamIndexed(spam, initialIndex));
+        } 
+
+    private:
+        void spamming(Person* person, Spam* spam) {
+            queue<Person*> pending;
+            pending.push(person);
+
+            while (!pending.empty()) {
+                Person* current = pending.front();
+                for (auto aFriend : current->getFriends()) {
+                    current->sendSpam(spam, aFriend);
+                    pending.push(aFriend);
+                }
+                pending.pop();
+            }
+        } 
 };
+
+/**
+ * [] circular reference 
+ * 
+ * 
+ */
 
 void tests() {
     { // person creation
@@ -164,14 +214,14 @@ void tests() {
         person->addFriend(new Person(3, "Any 3"));
         person->addFriend(new Person(4, "Any 4"));
 
-
         Network* network = new Network();
         network->addPerson(person);
         network->addPerson(new Person(5, "Any 5"));
         network->addSpam(new Spam(2, 5, {"poor", "rich", "millionaire"}), 0);
         network->addSpam(new Spam(2, 5, {"sad", "normal", "happy"}), 1);
-        assert(network->getPersonAttributes(1)[0] == "rich");
-        assert(network->getPersonAttributes(1)[1] == "sad");
+        network->startSpamming();
+        assert(network->getPersonAttributes(0)[0] == "rich");
+        assert(network->getPersonAttributes(0)[1] == "sad");
     }
 }
 
