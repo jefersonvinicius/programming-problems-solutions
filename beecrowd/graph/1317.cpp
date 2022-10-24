@@ -10,6 +10,8 @@
 
 using namespace std;
 
+
+
 class Spam {
     public:
         int id, initialThreshold, finalThreshold, personIdStart;
@@ -22,13 +24,24 @@ class Spam {
         }
 };
 
+// class SpamReceived {
+//     public:
+//         Spam* spam;
+//         Person* source;
+
+//         SpamReceived(Spam* spam, Person* person) {
+//             this->spam = spam;
+//             this->source = source;
+//         }
+// }
+
 class Person {
     private:
         unordered_map<int, Person*> friends;
-        unordered_map<Spam*, bool> spamsReceived;
+        unordered_map<int, unordered_map<Spam*, bool> > spamsReceived;
         unordered_map<Spam*, int> spamsCount;
 
-        bool hasReceived(Spam* spam) {
+        bool hasReceived(Spam* spam, Person* from) {
             if (this->spamsReceived.find(spam) != this->spamsReceived.end())
                 return true;
             return false;
@@ -64,6 +77,7 @@ class Person {
 
         void sendSpam(Spam* spam, Person* beingSpammed) {
             if (!beingSpammed->hasReceived(spam)) {
+                printf("%s spamming %s\n", this->name.c_str(), beingSpammed->name.c_str());
                 this->spamsCount[spam]++;
                 beingSpammed->addReceived(spam);
             }
@@ -91,6 +105,14 @@ class Person {
             return spam->labels[2];
         }
 };
+
+
+void printPeople(vector<Person*> people) {
+    for (auto person : people) {
+        printf("%s ", person->name.c_str());
+    }
+    printf("\n");
+}
 
 
 class Network {
@@ -127,6 +149,7 @@ class Network {
         void startSpamming() {
             for (int i = 0; i < this->spams.size(); i++) {
                 SpamIndexed* spam = this->spams[i];
+                printf("::: SPAM %s %s %s - %d\n", spam->spam->labels[0].c_str(), spam->spam->labels[1].c_str(), spam->spam->labels[2].c_str(), spam->index);
                 this->spamming(this->people[spam->index], spam->spam);
             }
         }
@@ -149,6 +172,9 @@ class Network {
             queue<Person*> pending;
             pending.push(person);
 
+            printf("---- %s\n", person->name.c_str());
+            printf(">>>>> ");
+            printPeople(person->getFriends());
             while (!pending.empty()) {
                 Person* current = pending.front();
 
@@ -256,10 +282,33 @@ void tests() {
         assert(network->getPersonAttributes(0)[0] == "rich");
         assert(network->getPersonAttributes(0)[1] == "sad");
     }
+
+    { // spamming deep
+        Person* bob = new Person(1, "bob");
+        Person* paul = new Person(2, "paul");
+        Person* mary = new Person(3, "mary");
+
+        bob->addFriend(mary);
+        bob->addFriend(paul);
+        paul->addFriend(bob);
+        paul->addFriend(mary);
+        paul->addFriend(new Person(4, "Julia"));
+        paul->addFriend(new Person(5, "Alice"));
+
+        Network* network = new Network();
+        network->addPerson(bob);
+        network->addPerson(paul);
+        Spam* spam = new Spam(2, 4, {"poor", "rich", "millionaire"});
+        network->addSpam(spam, 0);
+        network->startSpamming();
+        assert(paul->countSpammed(spam) == 4);
+        assert(network->getPersonAttributes(1)[0] == "millionaire");
+    }
 }
 
 int main() {
     tests();
+    if (1 == 1) return 0;
 
     int numberOfPeople;
     while (true) {
@@ -273,7 +322,7 @@ int main() {
             while (true) {
                 int x; scanf("%d", &x);
                 if (x == 0) break;
-                peopleConnections[i].push_back(x);
+                peopleConnections[i].push_back(x - 1);
             }
         }
 
@@ -283,7 +332,6 @@ int main() {
             int initialThreshold, finalThreshold;
             char attrA[MAX_SPAM_ATTRIBUTE_LENGTH], attrB[MAX_SPAM_ATTRIBUTE_LENGTH], attrC[MAX_SPAM_ATTRIBUTE_LENGTH];
             scanf("%d%d%s%s%s", &initialThreshold, &finalThreshold, attrA, attrB, attrC);
-            // printf("%d - %d - %d - %s - %s - %s\n", spamPersonStartIndex, initialThreshold, finalThreshold, attrA, attrB, attrC);
             Spam* spam = new Spam(initialThreshold, finalThreshold, { attrA, attrB, attrC });
             network->addSpam(spam, spamPersonStartIndex - 1);
         }
@@ -299,9 +347,14 @@ int main() {
             Person* current = network->getPeople()[i];
             vector<int> friendsIndexes = peopleConnections[i];
             for (int f = 0; f < friendsIndexes.size(); f++) {
-                int friendIndex = friendsIndexes[f] - 1;
+                int friendIndex = friendsIndexes[f];
                 current->addFriend(network->getPeople()[friendIndex]);
             }
+        }
+
+        for (int i = 0; i < numberOfPeople; i++) {
+            printf("-- %s\n", network->getPeople()[i]->name.c_str());
+            printPeople(network->getPeople()[i]->getFriends());
         }
 
         network->startSpamming();
