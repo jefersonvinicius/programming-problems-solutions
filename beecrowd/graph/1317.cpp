@@ -38,17 +38,22 @@ class Spam {
 class Person {
     private:
         unordered_map<int, Person*> friends;
-        unordered_map<int, unordered_map<Spam*, bool> > spamsReceived;
+        unordered_map<int, unordered_map<int, bool> > spamsReceived;
         unordered_map<Spam*, int> spamsCount;
 
         bool hasReceived(Spam* spam, Person* from) {
-            if (this->spamsReceived.find(spam) != this->spamsReceived.end())
+            unordered_map<int, unordered_map<int, bool> >::iterator found = this->spamsReceived.find(from->id);
+            if (found == this->spamsReceived.end()) return false;
+            
+            unordered_map<int, bool> spamsOfUser = found->second;
+
+            if (spamsOfUser.find(spam->id) != spamsOfUser.end())
                 return true;
             return false;
         }
 
-        void addReceived(Spam* spam) {
-            this->spamsReceived[spam] = true;
+        void addReceived(Spam* spam, Person* from) {
+            this->spamsReceived[from->id][spam->id] = true;
         }
 
     public:
@@ -76,10 +81,10 @@ class Person {
         }
 
         void sendSpam(Spam* spam, Person* beingSpammed) {
-            if (!beingSpammed->hasReceived(spam)) {
-                printf("%s spamming %s\n", this->name.c_str(), beingSpammed->name.c_str());
+            if (!beingSpammed->hasReceived(spam, this)) {
+                // printf("%s spamming %s\n", this->name.c_str(), beingSpammed->name.c_str());
                 this->spamsCount[spam]++;
-                beingSpammed->addReceived(spam);
+                beingSpammed->addReceived(spam, this);
             }
         }
 
@@ -149,7 +154,7 @@ class Network {
         void startSpamming() {
             for (int i = 0; i < this->spams.size(); i++) {
                 SpamIndexed* spam = this->spams[i];
-                printf("::: SPAM %s %s %s - %d\n", spam->spam->labels[0].c_str(), spam->spam->labels[1].c_str(), spam->spam->labels[2].c_str(), spam->index);
+                // printf("::: SPAM %s %s %s - %d\n", spam->spam->labels[0].c_str(), spam->spam->labels[1].c_str(), spam->spam->labels[2].c_str(), spam->index);
                 this->spamming(this->people[spam->index], spam->spam);
             }
         }
@@ -172,8 +177,8 @@ class Network {
             queue<Person*> pending;
             pending.push(person);
 
-            printf("---- %s\n", person->name.c_str());
-            printf(">>>>> ");
+            // printf("---- %s\n", person->name.c_str());
+            // printf(">>>>> ");
             printPeople(person->getFriends());
             while (!pending.empty()) {
                 Person* current = pending.front();
@@ -213,16 +218,17 @@ void tests() {
 
     { // person send spam
         Person* person = new Person(1, "Jeferson");
-        Person* pFriend = new Person(2, "Any");
+        Person* pFriend1 = new Person(2, "Any 2");
+        Person* pFriend2 = new Person(3, "Any 3");
         Spam* spam = new Spam(2, 5, {"poor", "medium", "rich"});
         Spam* spam2 = new Spam(3, 6, {"sad", "medium", "happy"});
-        person->sendSpam(spam, pFriend);
+        
+        person->sendSpam(spam, pFriend1);
         assert(person->countSpammed(spam) == 1);
-        person->sendSpam(spam, pFriend);
-        assert(person->countSpammed(spam) == 1);
-        assert(person->countSpammed(spam2) == 0);
-        person->sendSpam(spam2, pFriend);
-        assert(person->countSpammed(spam2) == 1);
+        person->sendSpam(spam, pFriend2);
+        assert(person->countSpammed(spam) == 2);
+        person->sendSpam(spam, pFriend1);
+        assert(person->countSpammed(spam) == 2);
     }
 
     { // spam and user attribute
@@ -307,8 +313,8 @@ void tests() {
 }
 
 int main() {
-    tests();
-    if (1 == 1) return 0;
+    // tests();
+    // if (1 == 1) return 0;
 
     int numberOfPeople;
     while (true) {
@@ -353,7 +359,7 @@ int main() {
         }
 
         for (int i = 0; i < numberOfPeople; i++) {
-            printf("-- %s\n", network->getPeople()[i]->name.c_str());
+            // printf("-- %s\n", network->getPeople()[i]->name.c_str());
             printPeople(network->getPeople()[i]->getFriends());
         }
 
