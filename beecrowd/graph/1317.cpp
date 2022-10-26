@@ -10,11 +10,9 @@
 
 using namespace std;
 
-
-
 class Spam {
     public:
-        int id, initialThreshold, finalThreshold, personIdStart;
+        int initialThreshold, finalThreshold, personIdStart;
         vector<string> labels;
 
         Spam(int initialThreshold, int finalThreshold, vector<string> labels) {
@@ -24,36 +22,25 @@ class Spam {
         }
 };
 
-// class SpamReceived {
-//     public:
-//         Spam* spam;
-//         Person* source;
-
-//         SpamReceived(Spam* spam, Person* person) {
-//             this->spam = spam;
-//             this->source = source;
-//         }
-// }
-
 class Person {
     private:
         unordered_map<int, Person*> friends;
-        unordered_map<int, unordered_map<int, bool> > spamsReceived;
+        unordered_map<int, unordered_map<Spam*, bool> > spamsReceived;
         unordered_map<Spam*, int> spamsCount;
 
         bool hasReceived(Spam* spam, Person* from) {
-            unordered_map<int, unordered_map<int, bool> >::iterator found = this->spamsReceived.find(from->id);
+            unordered_map<int, unordered_map<Spam*, bool> >::iterator found = this->spamsReceived.find(from->id);
             if (found == this->spamsReceived.end()) return false;
             
-            unordered_map<int, bool> spamsOfUser = found->second;
+            unordered_map<Spam*, bool> spamsOfUser = found->second;
 
-            if (spamsOfUser.find(spam->id) != spamsOfUser.end())
+            if (spamsOfUser.find(spam) != spamsOfUser.end())
                 return true;
             return false;
         }
 
         void addReceived(Spam* spam, Person* from) {
-            this->spamsReceived[from->id][spam->id] = true;
+            this->spamsReceived[from->id][spam] = true;
         }
 
     public:
@@ -82,7 +69,6 @@ class Person {
 
         void sendSpam(Spam* spam, Person* beingSpammed) {
             if (!beingSpammed->hasReceived(spam, this)) {
-                // printf("%s spamming %s\n", this->name.c_str(), beingSpammed->name.c_str());
                 this->spamsCount[spam]++;
                 beingSpammed->addReceived(spam, this);
             }
@@ -111,15 +97,6 @@ class Person {
         }
 };
 
-
-void printPeople(vector<Person*> people) {
-    for (auto person : people) {
-        printf("%s ", person->name.c_str());
-    }
-    printf("\n");
-}
-
-
 class Network {
     private:
         class SpamIndexed {
@@ -137,9 +114,7 @@ class Network {
         vector<SpamIndexed*> spams;
 
     public:
-        ~Network() {
-            printf("Destroying network\n");
-        }
+        ~Network() {}
 
         vector<string> getPersonAttributes(int personIndex) {
             vector<string> result;
@@ -154,7 +129,6 @@ class Network {
         void startSpamming() {
             for (int i = 0; i < this->spams.size(); i++) {
                 SpamIndexed* spam = this->spams[i];
-                // printf("::: SPAM %s %s %s - %d\n", spam->spam->labels[0].c_str(), spam->spam->labels[1].c_str(), spam->spam->labels[2].c_str(), spam->index);
                 this->spamming(this->people[spam->index], spam->spam);
             }
         }
@@ -177,9 +151,6 @@ class Network {
             queue<Person*> pending;
             pending.push(person);
 
-            // printf("---- %s\n", person->name.c_str());
-            // printf(">>>>> ");
-            printPeople(person->getFriends());
             while (!pending.empty()) {
                 Person* current = pending.front();
 
@@ -193,11 +164,6 @@ class Network {
             }
         } 
 };
-
-/**
- * [x] circular reference 
- * [] Destroy network
- */
 
 void tests() {
     { // person creation
@@ -229,6 +195,9 @@ void tests() {
         assert(person->countSpammed(spam) == 2);
         person->sendSpam(spam, pFriend1);
         assert(person->countSpammed(spam) == 2);
+        person->sendSpam(spam2, pFriend1);
+        assert(person->countSpammed(spam) == 2);
+        assert(person->countSpammed(spam2) == 1);
     }
 
     { // spam and user attribute
@@ -314,7 +283,6 @@ void tests() {
 
 int main() {
     // tests();
-    // if (1 == 1) return 0;
 
     int numberOfPeople;
     while (true) {
@@ -358,22 +326,19 @@ int main() {
             }
         }
 
-        for (int i = 0; i < numberOfPeople; i++) {
-            // printf("-- %s\n", network->getPeople()[i]->name.c_str());
-            printPeople(network->getPeople()[i]->getFriends());
-        }
-
         network->startSpamming();
         vector<Person*> people = network->getPeople();
         for (int i = 0; i < people.size(); i++) {
             Person* person = people[i];
-            printf("%s:", person->name.c_str());
+            printf("%s: ", person->name.c_str());
             vector<string> attrs = network->getPersonAttributes(i);
             for (auto attr : attrs) {
-                printf(" %s", attr.c_str());
+                printf("%s ", attr.c_str());
             }
             printf("\n");
         }
+
+        delete network;
     }
 
     return 0;
