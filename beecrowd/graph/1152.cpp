@@ -91,32 +91,40 @@ class City {
 
         void illuminate() {
             bool junctionsVisited[this->junctions.size()] = {false};
+            Junction* current = this->junctions[0];
+
             stack<Junction*> pending;
-            pending.push(this->junctions[0]);
-            while (!pending.empty()) {
-                Junction* current = pending.top();
-                pending.pop();
+            while (true) {
                 junctionsVisited[current->id] = true;
                 printf("VISITING: %d\n", current->id);
 
                 Street* smallerStreet = this->findSmallerStreetNoIlluminated(current->streets);
-                if (smallerStreet == NULL) {
+                printf("SMALLER: %p -> %d\n", smallerStreet, smallerStreet != NULL ? smallerStreet->meters : -1 );
+                if (smallerStreet == NULL || junctionsVisited[smallerStreet->getNextJunction(current)->id] == true) {
+                    if (pending.empty()) break;
+
+                    current = pending.top();
+                    pending.pop();
                     continue;
                 }
 
-                vector<Junction*> newPendingJunctions;
-                for (int i = 0; i < current->streets.size(); i++) {
-                    Street* street = current->streets[i];
-                    Junction* nextJunction = street->getNextJunction(current);
-                    if (junctionsVisited[nextJunction->id] == false && !street->illuminated)
-                        newPendingJunctions.push_back(nextJunction);
-                }
-                for (int i = 0; i < newPendingJunctions.size(); i++) {
-                    pending.push(newPendingJunctions[i]);
-                }
-                if (junctionsVisited[smallerStreet->getNextJunction(current)->id] == true) continue;
+                // vector<Junction*> newPendingJunctions;
+                // for (int i = 0; i < current->streets.size(); i++) {
+                //     Street* street = current->streets[i];
+                //     Junction* nextJunction = street->getNextJunction(current);
+                //     if (junctionsVisited[nextJunction->id] == false && 
+                //         smallerStreet->getNextJunction(current)->id != nextJunction->id &&
+                //         !street->illuminated 
+                //     )
+                //         newPendingJunctions.push_back(nextJunction);
+                // }
+                // for (int i = 0; i < newPendingJunctions.size(); i++) {
+                //     pending.push(newPendingJunctions[i]);
+                // }
+                // if (junctionsVisited[smallerStreet->getNextJunction(current)->id] == true) continue;
                 smallerStreet->illuminate();
-                pending.push(smallerStreet->getNextJunction(current));
+                pending.push(current);
+                current = smallerStreet->getNextJunction(current);
             }
         }
 
@@ -129,9 +137,14 @@ class City {
         Street* findSmallerStreetNoIlluminated(vector<Street*> streets) {
             Street* result = NULL;
             for (int i = 0; i < streets.size(); i++) {
-                if ((result == NULL && !streets[i]->illuminated) ||
-                    (result != NULL && streets[i]->meters < result->meters && !streets[i]->illuminated)) {
-                    result = streets[i];
+                Street* street = streets[i];
+                if (result == NULL && !street->illuminated) {
+                    result = street;
+                    continue;
+                }
+
+                if (result != NULL && street->meters < result->meters && !street->illuminated) {
+                    result = street;
                 }
             }
             return result;
@@ -180,19 +193,23 @@ void tests() {
     }
 
     { // illuminating city (2 junctions)
+        printf("<<START 1>>\n");
         City* city = new City(2);
         city->addStreet(0, 1, 10);
         city->illuminate();
         assert(city->getTotalMoneySaved() == 0);
+        printf("<<END 1>>\n");
     }
 
     { // illuminating city (3 junctions - cycle)
+        printf("<<START 2>>\n");
         City* city = new City(3);
         city->addStreet(0, 1, 10);
         city->addStreet(0, 2, 20);
         city->addStreet(1, 2, 5);
         city->illuminate();
         assert(city->getTotalMoneySaved() == 20);
+        printf("<<END 2>>\n");
     }
 
     { // illuminating city (3 junctions - no cycle)
