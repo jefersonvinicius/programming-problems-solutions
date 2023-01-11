@@ -2,6 +2,7 @@
 #include "assert.h"
 #include <vector>
 #include <stack>
+#include <algorithm>
 
 using namespace std;
 
@@ -57,6 +58,11 @@ Junction* Street::getNextJunction(Junction* currentJunction) {
     return this->junctionA;
 }
 
+
+bool compare(Street* a, Street* b) {
+    return a->meters < b->meters;
+}
+
 class City {
     public:
         vector<Junction*> junctions;
@@ -99,18 +105,12 @@ class City {
             return result;
         }
 
-        int getMaximumSavedMoneyAfterIlluminateStreets() {
-            int result = 0;
-            int theBest = -1;
-            for (int junctionId = 0; junctionId < this->junctions.size(); junctionId++) {
-                int savedMoneyForCurrentJunction = this->illuminate(junctionId);
-                if (savedMoneyForCurrentJunction > result) {
-                    result = savedMoneyForCurrentJunction;
-                    theBest = junctionId;
-                }
-            }
-            printf("THE BEST IS: %d\n", theBest);
-            return result;
+        void illuminate() {
+            vector<Street*> streets(this->streets);
+            make_heap(streets.begin(), streets.end(), compare);
+            vector<Street*> selectedStreets;
+            // while (true) {
+            // }
         }
 
         void debug() {
@@ -119,33 +119,33 @@ class City {
         }
     private:
 
-        int illuminate(int sourceJunction) {
-            this->turnOffAllStreets();
-            bool junctionsVisited[this->junctions.size()] = {false};
-            Junction* current = this->junctions[sourceJunction];
+        // int illuminate(int sourceJunction) {
+        //     this->turnOffAllStreets();
+        //     bool junctionsVisited[this->junctions.size()] = {false};
+        //     Junction* current = this->junctions[sourceJunction];
 
-            stack<Junction*> pending;
-            while (true) {
-                junctionsVisited[current->id] = true;
-                printf("VISITING: %d\n", current->id);
+        //     stack<Junction*> pending;
+        //     while (true) {
+        //         junctionsVisited[current->id] = true;
+        //         printf("VISITING: %d\n", current->id);
 
-                Street* smallerStreet = this->findSmallerStreetNoIlluminated(current->streets);
-                if (smallerStreet == NULL || junctionsVisited[smallerStreet->getNextJunction(current)->id] == true) {
-                    if (pending.empty()) break;
+        //         Street* smallerStreet = this->findSmallerStreetNoIlluminated(current->streets);
+        //         if (smallerStreet == NULL || junctionsVisited[smallerStreet->getNextJunction(current)->id] == true) {
+        //             if (pending.empty()) break;
 
-                    current = pending.top();
-                    pending.pop();
-                    continue;
-                }
+        //             current = pending.top();
+        //             pending.pop();
+        //             continue;
+        //         }
 
-                printf("ILLUMINATING: %p -> %d\n", smallerStreet, smallerStreet != NULL ? smallerStreet->meters : -1 );
-                smallerStreet->illuminate();
-                pending.push(current);
-                current = smallerStreet->getNextJunction(current);
-            }
+        //         printf("ILLUMINATING: %p -> %d\n", smallerStreet, smallerStreet != NULL ? smallerStreet->meters : -1 );
+        //         smallerStreet->illuminate();
+        //         pending.push(current);
+        //         current = smallerStreet->getNextJunction(current);
+        //     }
 
-            return this->getTotalMoneySaved();
-        }
+        //     return this->getTotalMoneySaved();
+        // }
 
         void turnOffAllStreets() {
             for (int i = 0; i < this->streets.size(); i++) {
@@ -153,14 +153,10 @@ class City {
             }
         }
 
-        Street* findSmallerStreetNoIlluminated(vector<Street*> streets) {
+        Street* findSmallerStreetNoIlluminated(vector<Street*>* selectedStreets) {
             Street* result = NULL;
             for (int i = 0; i < streets.size(); i++) {
                 Street* street = streets[i];
-                if (result == NULL && !street->illuminated) {
-                    result = street;
-                    continue;
-                }
 
                 if (result != NULL && street->meters < result->meters && !street->illuminated) {
                     result = street;
@@ -170,7 +166,35 @@ class City {
         }
 };
 
+
+void printStreets(vector<Street*> streets) {
+    for (auto street : streets) {
+        printf("%d ", street->meters);
+    }
+    printf("\n");
+}
+
 void tests() {
+    { // heap study
+        vector<Street*> streets;
+        Junction* junction1 = new Junction(1);
+        Junction* junction2 = new Junction(2);
+        Junction* junction3 = new Junction(3);
+        streets.push_back(new Street(10, junction1, junction2));
+        streets.push_back(new Street(20, junction1, junction3));
+        streets.push_back(new Street(50, junction1, junction3));
+        make_heap(streets.begin(), streets.end(), compare);
+
+        printStreets(streets);
+        assert(streets.front()->meters == 50);
+        pop_heap(streets.begin(), streets.end()); streets.pop_back();
+        printStreets(streets);
+        assert(streets.front()->meters == 20);
+        pop_heap(streets.begin(), streets.end()); streets.pop_back();
+        printStreets(streets);
+        assert(streets.front()->meters == 10);
+    }
+
     { // junction creation
         Junction* junction1 = new Junction(0);
         Junction* junction2 = new Junction(1);
@@ -215,7 +239,8 @@ void tests() {
         printf("<<START 1>>\n");
         City* city = new City(2);
         city->addStreet(0, 1, 10);
-        assert(city->getMaximumSavedMoneyAfterIlluminateStreets() == 0);
+        city->illuminate();
+        assert(city->getTotalMoneySaved() == 0);
         printf("<<END 1>>\n");
     }
 
@@ -225,7 +250,8 @@ void tests() {
         city->addStreet(0, 1, 10);
         city->addStreet(0, 2, 20);
         city->addStreet(1, 2, 5);
-        assert(city->getMaximumSavedMoneyAfterIlluminateStreets() == 20);
+        city->illuminate();
+        assert(city->getTotalMoneySaved() == 20);
         printf("<<END 2>>\n");
     }
 
@@ -235,7 +261,8 @@ void tests() {
         city->addStreet(0, 1, 10);
         city->addStreet(1, 2, 8);
         city->addStreet(1, 3, 7);
-        assert(city->getMaximumSavedMoneyAfterIlluminateStreets() == 0);
+        city->illuminate();
+        assert(city->getTotalMoneySaved() == 0);
         printf("<<END 3>>\n");
     }
 
@@ -246,7 +273,8 @@ void tests() {
         city->addStreet(0, 2, 7);
         city->addStreet(1, 3, 100);
         city->addStreet(2, 3, 2);
-        assert(city->getMaximumSavedMoneyAfterIlluminateStreets() == 100);
+        city->illuminate();
+        assert(city->getTotalMoneySaved() == 100);
         printf("<<END 4>>\n");
     }
 
@@ -264,7 +292,8 @@ void tests() {
         city->addStreet(4, 5, 8);
         city->addStreet(4, 6, 9);
         city->addStreet(5, 6, 11);
-        assert(city->getMaximumSavedMoneyAfterIlluminateStreets() == 51);
+        city->illuminate();
+        assert(city->getTotalMoneySaved() == 51);
         printf("<<END 5>>\n");
     }
 }
