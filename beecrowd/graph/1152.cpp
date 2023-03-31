@@ -111,9 +111,7 @@ class City {
             struct IntDisjointSet* set = create_set();
             while (!streets.empty()) {
                 Street* current = streets.front();
-                printf("%d ---%d--- %d\n", current->junctionA->id, current->meters, current->junctionB->id);
                 if (!set_same(set, current->junctionA->id, current->junctionB->id)) {
-                    printf("    ILLUMINATING\n");
                     set_union(set, current->junctionA->id, current->junctionB->id);
                     this->totalIlluminatedMeters += current->meters;
                 }
@@ -239,13 +237,17 @@ int main() {
         return 0;
     #endif
 
-    int m, n; scanf("%d%d", &m, &n);
-    City* city = new City(m);
-    for (int i = 0; i < n; i++) {
-        int x, y, z; scanf("%d%d%d", &x, &y, &z);
-        city->addStreet(x, y, z);
+    while (true) {
+        int m, n; scanf("%d%d", &m, &n);
+        if (m == 0 && n == 0) break;
+        City* city = new City(m);
+        for (int i = 0; i < n; i++) {
+            int x, y, z; scanf("%d%d%d", &x, &y, &z);
+            city->addStreet(x, y, z);
+        }
+        city->illuminate();
+        printf("%ld\n", city->getTotalMoneySaved());
     }
-    city->illuminate();
-    printf("%ld\n", city->getTotalMoneySaved());
+
     return 0;
 }
