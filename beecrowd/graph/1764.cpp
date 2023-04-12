@@ -28,32 +28,38 @@ bool is_same_set(int* parent, int a, int b) {
     return find_set_parent(parent, a) == find_set_parent(parent, b); 
 }
 
-int distances[200][200];
+struct Edge {
+    int a, b, weight;
+};
 
-bool heap_comparision(pair<int, int> a, pair<int, int> b) {
-    return distances[a.first][a.second] > distances[b.first][b.second];
+bool heap_comparision(struct Edge a, struct Edge b) {
+    return a.weight > b.weight;
 }
 
 int main() {
     while (true) {
         int numberOfCities, numberOfRoads; scanf("%d%d", &numberOfCities, &numberOfRoads);
         if (numberOfCities == 0 && numberOfRoads == 0) break;
-        vector<pair<int, int>> connections;
+    
 
+        vector<struct Edge> connections;
         for (int i = 0; i < numberOfRoads; i++) {
             int routeA, routeB, distance; scanf("%d%d%d", &routeA, &routeB, &distance);
-            connections.push_back(make_pair(routeA, routeB));
-            distances[routeA][routeB] = distance;
+            connections.push_back(Edge {
+                .a = routeA,
+                .b = routeB,
+                .weight = distance
+            });
         }
 
         make_heap(connections.begin(), connections.end(), heap_comparision);
         int answer = 0;
-        int* sets = make_disjoint_sets(MAX_CITIES);
+        int* sets = make_disjoint_sets(numberOfCities);
         while (!connections.empty()) {
-            pair<int, int> connection = connections.front();
-            if (!is_same_set(sets, connection.first, connection.second)) {
-                answer += distances[connection.first][connection.second];
-                union_sets(sets, connection.first, connection.second);
+            struct Edge edge = connections.front();
+            if (!is_same_set(sets, edge.a, edge.b)) {
+                answer += edge.weight;
+                union_sets(sets, edge.a, edge.b);
             }
             pop_heap(connections.begin(), connections.end(), heap_comparision); connections.pop_back();
         }
