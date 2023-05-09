@@ -10,51 +10,13 @@
 #include <string.h>
 #include <limits.h>
 
-#define MAX_GRAPH_SIZE 1000
+#define MAX_GRAPH_SIZE 5498510
 
 char* readline();
 char* ltrim(char*);
 char* rtrim(char*);
 char** split_string(char*);
 int parse_int(char*);
-
-/*
- * Complete the 'shortestReach' function below.
- *
- * The function is expected to return an INTEGER_ARRAY.
- * The function accepts following parameters:
- *  1. INTEGER n
- *  2. 2D_INTEGER_ARRAY edges
- *  3. INTEGER s
- */
-
-/*
- * To return the integer array from the function, you should:
- *     - Store the size of the array to be returned in the result_count variable
- *     - Allocate the array statically or dynamically
- *
- * For example,
- * int* return_integer_array_using_static_allocation(int* result_count) {
- *     *result_count = 5;
- *
- *     static int a[5] = {1, 2, 3, 4, 5};
- *
- *     return a;
- * }
- *
- * int* return_integer_array_using_dynamic_allocation(int* result_count) {
- *     *result_count = 5;
- *
- *     int *a = malloc(5 * sizeof(int));
- *
- *     for (int i = 0; i < 5; i++) {
- *         *(a + i) = i + 1;
- *     }
- *
- *     return a;
- * }
- *
- */
 
 int* intp(int v) { 
     int* pointer = (int*) malloc(sizeof(int));
@@ -221,7 +183,7 @@ struct AdjacencyListGraph {
 struct AdjacencyListGraph* create_adjacency_list_graph(enum GraphBidirectionalFlag is_bidirectional) {
     struct AdjacencyListGraph* graph = (struct AdjacencyListGraph*) malloc(sizeof(struct AdjacencyListGraph));
     graph->is_bidirectional = is_bidirectional;
-    graph->list = (struct ALGNode**) malloc(sizeof(struct ALGNode*) * MAX_GRAPH_SIZE);
+    graph->list = (struct ALGNode**) malloc(sizeof(struct ALGNode) * MAX_GRAPH_SIZE);
     for (int i = 0; i < MAX_GRAPH_SIZE; i++) graph->list[i] = NULL;
     return graph;
 }
@@ -259,10 +221,12 @@ struct Pair* __make_vertex_pair(struct AdjacencyListGraph* graph, int vertex) {
     return make_pair(&graph_get_vertex_edges(graph, vertex)->weight, intp(vertex));
 }
 
-struct DijkstraResult { double* distances; };
+struct DijkstraResult { int* distances; };
 
 struct DijkstraResult graph_dijkstra(struct AdjacencyListGraph* graph, int initial_vertex) {
-    double distances[MAX_GRAPH_SIZE]; for(int i=0;i<MAX_GRAPH_SIZE;i++) distances[i]=INFINITY;
+    printf("OI\n");
+
+    int distances[MAX_GRAPH_SIZE]; for(int i=0;i<MAX_GRAPH_SIZE;i++) distances[i]=INT_MAX;
     int visited[MAX_GRAPH_SIZE]; memset(visited, 0, sizeof(visited));
     distances[initial_vertex] = 0;
     struct Heap* heap = create_heap(MAX_GRAPH_SIZE, sizeof(struct Pair), cmp_pairs);
@@ -290,11 +254,11 @@ struct DijkstraResult graph_dijkstra(struct AdjacencyListGraph* graph, int initi
 
 int* shortestReach(int n, int edges_rows, int edges_columns, int** edges, int s, int* result_count) {
     struct AdjacencyListGraph* graph = create_adjacency_list_graph(IsBidirectional);
-    for (int i = 0; i < edges_columns; )
+    for (int i = 0; i < edges_rows; i++) graph_add_edge(graph, edges[i][0] - 1, edges[i][1] - 1, edges[i][2]);
     *result_count = n;
-    int result[n]; for(int i=0;i<n;i++) result[i]=INT_MAX; 
-    
-    return result;
+    struct DijkstraResult result = graph_dijkstra(graph, s - 1);
+    for (int i = 0; i < n; i++) if (result.distances[i] == INT_MAX) result.distances[i] = -1;
+    return result.distances;
 }
 
 int main() {
@@ -317,6 +281,7 @@ int main() {
         int result_count;
         int* result = shortestReach(n, m, 3, edges, s, &result_count);
         for (int i = 0; i < result_count; i++) {
+            if (i == s - 1) continue;
             fprintf(fptr, "%d", *(result + i));
             if (i != result_count - 1) {
                 fprintf(fptr, " ");
