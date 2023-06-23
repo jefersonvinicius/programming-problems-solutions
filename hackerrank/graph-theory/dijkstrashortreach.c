@@ -10,7 +10,8 @@
 #include <string.h>
 #include <limits.h>
 
-#define MAX_GRAPH_SIZE 5498510
+#define MAX_GRAPH_VERTEX_ID 3005
+#define HEAP_MAX 100000
 
 char* readline();
 char* ltrim(char*);
@@ -81,6 +82,7 @@ int _min_cmp(int* a, int* b) { return *a < *b; }
 
 struct HeapElement* __create_heap_element(void* value) {
     struct HeapElement* element = (struct HeapElement*) malloc(sizeof(struct HeapElement));
+    // printf("INSERTING %p\n", value);
     element->value = value;
     return element;
 }
@@ -177,14 +179,15 @@ enum GraphBidirectionalFlag {
 struct AdjacencyListGraph {
     struct ALGNode** list;
     enum GraphBidirectionalFlag is_bidirectional;
-    size_t size;
+    size_t number_of_vertexes;
 };
 
-struct AdjacencyListGraph* create_adjacency_list_graph(enum GraphBidirectionalFlag is_bidirectional) {
+struct AdjacencyListGraph* create_adjacency_list_graph(enum GraphBidirectionalFlag is_bidirectional, int number_of_vertexes) {
     struct AdjacencyListGraph* graph = (struct AdjacencyListGraph*) malloc(sizeof(struct AdjacencyListGraph));
     graph->is_bidirectional = is_bidirectional;
-    graph->list = (struct ALGNode**) malloc(sizeof(struct ALGNode) * MAX_GRAPH_SIZE);
-    for (int i = 0; i < MAX_GRAPH_SIZE; i++) graph->list[i] = NULL;
+    graph->number_of_vertexes = number_of_vertexes;
+    graph->list = (struct ALGNode**) malloc(sizeof(struct ALGNode) * MAX_GRAPH_VERTEX_ID);
+    for (int i = 0; i < MAX_GRAPH_VERTEX_ID; i++) graph->list[i] = NULL;
     return graph;
 }
 
@@ -212,53 +215,68 @@ struct ALGNode* graph_get_vertex_edges(struct AdjacencyListGraph* graph, int ver
 
 
 int cmp_pairs(struct Pair* a, struct Pair* b) {
+    // printf("HELO1\n");
    int a_weight = *((int*)a->left);
    int b_weight = *((int*)b->left);
+    // printf("HELO2\n");
    return a_weight < b_weight;
 }
 
 struct Pair* __make_vertex_pair(struct AdjacencyListGraph* graph, int vertex) {
+    // printf("MAKING PAIR: %d - %d\n", graph_get_vertex_edges(graph, vertex)->weight, vertex);
     return make_pair(&graph_get_vertex_edges(graph, vertex)->weight, intp(vertex));
 }
 
 struct DijkstraResult { int* distances; };
 
-struct DijkstraResult graph_dijkstra(struct AdjacencyListGraph* graph, int initial_vertex) {
-    printf("OI\n");
-
-    int distances[MAX_GRAPH_SIZE]; for(int i=0;i<MAX_GRAPH_SIZE;i++) distances[i]=INT_MAX;
-    int visited[MAX_GRAPH_SIZE]; memset(visited, 0, sizeof(visited));
+int* graph_dijkstra(struct AdjacencyListGraph* graph, int initial_vertex) {
+    // printf("INITIAL_VERTEX: %d\n", initial_vertex);
+    int* distances = malloc(graph->number_of_vertexes * sizeof(int)); for (int i = 0; i < graph->number_of_vertexes; i++) distances[i] = -1;
+    // printf("OI|\n");
+    int visited[MAX_GRAPH_VERTEX_ID]; memset(visited, 0, sizeof(visited));
+    // printf("OI2|\n");
     distances[initial_vertex] = 0;
-    struct Heap* heap = create_heap(MAX_GRAPH_SIZE, sizeof(struct Pair), cmp_pairs);
+    struct Heap* heap = create_heap(HEAP_MAX, sizeof(struct Pair), cmp_pairs);
+    // printf("OI3|\n");
     heap_insert(heap, __make_vertex_pair(graph, initial_vertex));
+    // printf("OI4\n");
     while (!heap_is_empty(heap)) {
+        // printf("OI4.1\n");
         struct Pair* pair = (struct Pair*) heap_top(heap);
+        // printf("OI4.2 %p %p\n", pair, pair->right);
         int current_vertex = *((int*) pair->right);
+        // printf("OI4.3\n");
         heap_delete(heap);
         if (visited[current_vertex]) continue;
         visited[current_vertex] = 1;
+
         struct ALGNode* node = graph_get_vertex_edges(graph, current_vertex);
+        // printf("OI5 %d\n", current_vertex);
         while (node != NULL) {
-            if (distances[current_vertex] + node->weight < distances[node->vertex]) 
-                distances[node->vertex] = distances[current_vertex] + node->weight;
-            
-            if (!visited[node->vertex])
+            // printf("OI6 %d %d\n", node->vertex, distances[current_vertex] + node->weight);
+            int current_weight = distances[current_vertex] + node->weight;
+            if (distances[node->vertex] < 0 || current_weight < distances[node->vertex]) 
+                distances[node->vertex] = current_weight;
+            // printf("OI6.2,5\n");
+            // if (!visited[node->vertex])
                 heap_insert(heap, __make_vertex_pair(graph, node->vertex));
+            // printf("OI6.5 %p\n", node);
             node = node->next;
+            // printf("OI7\n");    
         }
+        // printf("JA\n");
     }
+    // printf("HEJ\n");
     free(heap);
-    struct DijkstraResult result = { .distances = distances };
-    return result;
+    return distances;
 }
 
 int* shortestReach(int n, int edges_rows, int edges_columns, int** edges, int s, int* result_count) {
-    struct AdjacencyListGraph* graph = create_adjacency_list_graph(IsBidirectional);
+    struct AdjacencyListGraph* graph = create_adjacency_list_graph(IsBidirectional, n);
     for (int i = 0; i < edges_rows; i++) graph_add_edge(graph, edges[i][0] - 1, edges[i][1] - 1, edges[i][2]);
     *result_count = n;
-    struct DijkstraResult result = graph_dijkstra(graph, s - 1);
-    for (int i = 0; i < n; i++) if (result.distances[i] == INT_MAX) result.distances[i] = -1;
-    return result.distances;
+    int* result = graph_dijkstra(graph, s - 1);
+    return result;
 }
 
 int main() {
@@ -280,13 +298,16 @@ int main() {
         int s = parse_int(ltrim(rtrim(readline())));
         int result_count;
         int* result = shortestReach(n, m, 3, edges, s, &result_count);
-        for (int i = 0; i < result_count; i++) {
+        
+         for (int i = 0; i < result_count; i++) {
             if (i == s - 1) continue;
-            fprintf(fptr, "%d", *(result + i));
+            fprintf(fptr, "%d", result[i]);
             if (i != result_count - 1) {
                 fprintf(fptr, " ");
             }
         }
+        // printf("OII\n");
+        free(result);
         fprintf(fptr, "\n");
     }
     fclose(fptr);
